@@ -67,13 +67,6 @@ const ChatPage: React.FC = () => {
     }, 1000)
   }
 
-  const handleKeyPress = (event: React.KeyboardEvent): void => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault()
-      handleSendMessage()
-    }
-  }
-
   const formatTime = (date: Date): string => {
     return date.toLocaleTimeString('zh-CN', {
       hour: '2-digit',
@@ -230,7 +223,12 @@ const ChatPage: React.FC = () => {
             maxRows={4}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={(event: React.KeyboardEvent) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                handleSendMessage()
+              }
+            }}
             placeholder="输入消息... (按Enter发送，Shift+Enter换行)"
             variant="standard"
             fullWidth
