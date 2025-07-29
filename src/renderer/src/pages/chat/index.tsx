@@ -6,11 +6,9 @@ import {
   IconButton,
   Typography,
   Avatar,
-  Stack,
-  Chip,
   CircularProgress
 } from '@mui/material'
-import { Send as SendIcon, SmartToy as BotIcon, Person as UserIcon } from '@mui/icons-material'
+import { Send as SendIcon, Person as UserIcon } from '@mui/icons-material'
 
 interface Message {
   id: string
@@ -20,14 +18,7 @@ interface Message {
 }
 
 const ChatPage: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: '你好！我是AI助手，有什么可以帮助你的吗？',
-      role: 'assistant',
-      timestamp: new Date()
-    }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -78,111 +69,172 @@ const ChatPage: React.FC = () => {
     <Box
       sx={{
         height: '100vh',
+        bgcolor: '#f7f7f8',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: 'background.default',
-        paddingTop: '64px' // 为顶部栏预留空间
+        alignItems: 'center',
+        pt: '64px'
       }}
     >
       {/* 消息列表区域 */}
       <Box
         sx={{
           flex: 1,
-          overflow: 'auto',
-          p: 2,
+          minHeight: 0,
+          width: '100%',
+          mx: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: 2,
-          boxSizing: 'border-box'
+          gap: 0,
+          py: 2,
+          px: { xs: 0, sm: 2 },
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#bdbdbd #ececf1',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            background: '#ececf1'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#bdbdbd',
+            borderRadius: '4px'
+          }
         }}
       >
-        {messages.map((message) => (
-          <Box
-            key={message.id}
-            sx={{
-              display: 'flex',
-              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-              mb: 2
-            }}
-          >
+        <Box sx={{ width: '100%', maxWidth: 700, mx: 'auto' }}>
+          {messages.map((message) => (
             <Box
+              key={message.id}
               sx={{
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: 1,
-                maxWidth: '70%',
-                flexDirection: message.role === 'user' ? 'row-reverse' : 'row'
+                justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                px: 1,
+                py: 0.5
               }}
             >
-              <Avatar
+              <Box
                 sx={{
-                  bgcolor: message.role === 'user' ? 'primary.main' : 'grey.500',
-                  width: 32,
-                  height: 32
+                  display: 'flex',
+                  flexDirection: message.role === 'user' ? 'row-reverse' : 'row',
+                  alignItems: 'flex-end',
+                  gap: 1,
+                  width: '100%',
+                  maxWidth: '90%'
                 }}
               >
-                {message.role === 'user' ? <UserIcon /> : <BotIcon />}
-              </Avatar>
-
-              <Paper
-                elevation={1}
-                sx={{
-                  p: 1,
-                  bgcolor: message.role === 'user' ? 'primary.main' : 'background.paper',
-                  color: message.role === 'user' ? 'primary.contrastText' : 'text.primary',
-                  borderRadius: 2,
-                  maxWidth: '100%',
-                  wordBreak: 'break-word'
-                }}
-              >
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  {message.content}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    opacity: 0.7,
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  {formatTime(message.timestamp)}
-                </Typography>
-              </Paper>
+                {message.role === 'user' && (
+                  <Avatar
+                    sx={{
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                      width: 36,
+                      height: 36,
+                      fontSize: 22,
+                      boxShadow: 2
+                    }}
+                  >
+                    <UserIcon />
+                  </Avatar>
+                )}
+                {message.role === 'user' ? (
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                      borderRadius: '18px 18px 4px 18px',
+                      px: 2,
+                      py: 1.5,
+                      maxWidth: { xs: '80vw', sm: 540 },
+                      minWidth: 0,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                      fontSize: '1.05rem',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ fontSize: '1.05rem', mb: 0.5 }}>
+                      {message.content}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        opacity: 0.5,
+                        fontSize: '0.72rem',
+                        display: 'block',
+                        textAlign: 'right',
+                        mt: 0.5
+                      }}
+                    >
+                      {formatTime(message.timestamp)}
+                    </Typography>
+                  </Paper>
+                ) : (
+                  <Box
+                    sx={{
+                      bgcolor: '#ececf1',
+                      color: 'text.primary',
+                      borderRadius: 2,
+                      px: 2,
+                      py: 1.5,
+                      maxWidth: { xs: '80vw', sm: 540 },
+                      minWidth: 0,
+                      fontSize: '1.05rem',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'pre-wrap'
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ fontSize: '1.05rem', mb: 0.5 }}>
+                      {message.content}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        opacity: 0.5,
+                        fontSize: '0.72rem',
+                        display: 'block',
+                        textAlign: 'left',
+                        mt: 0.5
+                      }}
+                    >
+                      {formatTime(message.timestamp)}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </Box>
-          </Box>
-        ))}
+          ))}
+        </Box>
 
         {/* 加载状态 */}
         {isLoading && (
           <Box
             sx={{
               display: 'flex',
-              justifyContent: 'flex-start',
-              mb: 2
+              justifyContent: 'center'
             }}
           >
             <Box
               sx={{
                 display: 'flex',
-                alignItems: 'flex-start',
-                gap: 1
+                alignItems: 'flex-end',
+                gap: 1,
+                width: '100%',
+                maxWidth: 700,
+                px: 1,
+                py: 0.5
               }}
             >
-              <Avatar
-                sx={{
-                  bgcolor: 'grey.500',
-                  width: 32,
-                  height: 32
-                }}
-              >
-                <BotIcon />
-              </Avatar>
               <Paper
-                elevation={1}
+                elevation={0}
                 sx={{
-                  p: 2,
-                  bgcolor: 'background.paper',
+                  bgcolor: '#ececf1',
                   borderRadius: 2,
+                  px: 2,
+                  py: 1.5,
+                  minWidth: 0,
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1
@@ -203,19 +255,26 @@ const ChatPage: React.FC = () => {
       {/* 输入区域 */}
       <Box
         sx={{
-          p: 2,
-          borderTop: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper'
+          width: '100%',
+          maxWidth: 700,
+          position: 'sticky',
+          bottom: 0,
+          left: 0,
+          bgcolor: 'transparent',
+          zIndex: 10,
+          pb: 2
         }}
       >
         <Paper
-          elevation={2}
+          elevation={3}
           sx={{
-            p: 1,
+            px: 2,
+            py: 1,
+            gap: 1,
             display: 'flex',
-            alignItems: 'flex-end',
-            gap: 1
+            flexDirection: 'column',
+            borderRadius: 6,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
           }}
         >
           <TextField
@@ -235,8 +294,15 @@ const ChatPage: React.FC = () => {
             disabled={isLoading}
             sx={{
               '& .MuiInputBase-root': {
-                fontSize: '1rem'
+                fontSize: '1rem',
+                bgcolor: 'transparent'
+              },
+              '& .MuiInput-underline:before, & .MuiInput-underline:after': {
+                borderBottom: 'none'
               }
+            }}
+            InputProps={{
+              disableUnderline: true
             }}
           />
           <IconButton
@@ -244,35 +310,12 @@ const ChatPage: React.FC = () => {
             disabled={!inputValue.trim() || isLoading}
             color="primary"
             sx={{
-              alignSelf: 'flex-end',
-              mb: 0.5
+              alignSelf: 'flex-end'
             }}
           >
             <SendIcon />
           </IconButton>
         </Paper>
-
-        {/* 快捷提示 */}
-        <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
-          <Chip
-            label="帮我写代码"
-            size="small"
-            onClick={() => setInputValue('帮我写一个React组件')}
-            sx={{ cursor: 'pointer' }}
-          />
-          <Chip
-            label="解释概念"
-            size="small"
-            onClick={() => setInputValue('请解释一下什么是React Hooks')}
-            sx={{ cursor: 'pointer' }}
-          />
-          <Chip
-            label="代码优化"
-            size="small"
-            onClick={() => setInputValue('请帮我优化这段代码的性能')}
-            sx={{ cursor: 'pointer' }}
-          />
-        </Stack>
       </Box>
     </Box>
   )
