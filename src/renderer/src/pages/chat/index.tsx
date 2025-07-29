@@ -6,9 +6,16 @@ import {
   IconButton,
   Typography,
   Avatar,
-  CircularProgress
+  CircularProgress,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material'
-import { Send as SendIcon, Person as UserIcon } from '@mui/icons-material'
+import {
+  Send as SendIcon,
+  Person as UserIcon,
+  SmartToy as AgentIcon,
+  Chat as ChatIcon
+} from '@mui/icons-material'
 
 interface Message {
   id: string
@@ -17,10 +24,13 @@ interface Message {
   timestamp: Date
 }
 
+type ChatMode = 'chat' | 'agent'
+
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [chatMode, setChatMode] = useState<ChatMode>('chat')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = (): void => {
@@ -30,6 +40,15 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleModeChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newMode: ChatMode | null
+  ): void => {
+    if (newMode !== null) {
+      setChatMode(newMode)
+    }
+  }
 
   const handleSendMessage = async (): Promise<void> => {
     if (!inputValue.trim()) return
@@ -49,7 +68,7 @@ const ChatPage: React.FC = () => {
     setTimeout(() => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `我收到了你的消息："${userMessage.content}"。这是一个模拟的AI回复。`,
+        content: `我收到了你的消息："${userMessage.content}"。这是一个模拟的AI回复。当前模式：${chatMode === 'chat' ? '聊天模式' : '智能代理模式'}`,
         role: 'assistant',
         timestamp: new Date()
       }
@@ -76,6 +95,71 @@ const ChatPage: React.FC = () => {
         pt: '64px'
       }}
     >
+      {/* 模式切换区域 */}
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          py: 2,
+          px: { xs: 1, sm: 2 }
+        }}
+      >
+        <Paper
+          elevation={1}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}
+        >
+          <ToggleButtonGroup
+            value={chatMode}
+            exclusive
+            onChange={handleModeChange}
+            sx={{
+              '& .MuiToggleButton-root': {
+                px: 3,
+                py: 1,
+                border: 'none',
+                borderRadius: 0,
+                '&:first-of-type': {
+                  borderTopLeftRadius: 12,
+                  borderBottomLeftRadius: 12
+                },
+                '&:last-of-type': {
+                  borderTopRightRadius: 12,
+                  borderBottomRightRadius: 12
+                },
+                '&.Mui-selected': {
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  '&:hover': {
+                    bgcolor: 'primary.dark'
+                  }
+                },
+                '&:not(.Mui-selected)': {
+                  bgcolor: 'background.paper',
+                  color: 'text.secondary',
+                  '&:hover': {
+                    bgcolor: 'action.hover'
+                  }
+                }
+              }
+            }}
+          >
+            <ToggleButton value="chat">
+              <ChatIcon sx={{ mr: 1, fontSize: 20 }} />
+              <Box sx={{ fontWeight: 500 }}>Chat</Box>
+            </ToggleButton>
+            <ToggleButton value="agent">
+              <AgentIcon sx={{ mr: 1, fontSize: 20 }} />
+              <Box sx={{ fontWeight: 500 }}>Agent</Box>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Paper>
+      </Box>
+
       {/* 消息列表区域 */}
       <Box
         sx={{
