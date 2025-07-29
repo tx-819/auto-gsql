@@ -774,25 +774,25 @@ const DatabaseModelDetection: React.FC = () => {
                           <Typography variant="subtitle2" fontWeight="bold">
                             {relation.sourceTable === selectedTableForRelations ? (
                               <>
-                                <Chip
-                                  label={relation.sourceTable}
-                                  size="small"
-                                  color="primary"
-                                  sx={{ mr: 1 }}
-                                />
-                                {relation.sourceColumn} → {relation.targetTable}.
+                                <Box
+                                  component="span"
+                                  sx={{ color: 'primary.main', fontWeight: 'bold' }}
+                                >
+                                  {relation.sourceTable}
+                                </Box>
+                                .{relation.sourceColumn} → {relation.targetTable}.
                                 {relation.targetColumn}
                               </>
                             ) : (
                               <>
                                 {relation.sourceTable}.{relation.sourceColumn} →{' '}
-                                <Chip
-                                  label={relation.targetTable}
-                                  size="small"
-                                  color="primary"
-                                  sx={{ ml: 1 }}
-                                />
-                                {relation.targetColumn}
+                                <Box
+                                  component="span"
+                                  sx={{ color: 'primary.main', fontWeight: 'bold' }}
+                                >
+                                  {relation.targetTable}
+                                </Box>
+                                .{relation.targetColumn}
                               </>
                             )}
                           </Typography>
