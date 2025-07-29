@@ -15,22 +15,25 @@ import {
   Button,
   Divider,
   Avatar,
-  Chip
+  Chip,
+  ButtonProps
 } from '@mui/material'
 import {
   Menu as MenuIcon,
   Add as AddIcon,
-  Chat as ChatIcon,
   Person as PersonIcon,
   MoreVert as MoreVertIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon
+  Storage as StorageIcon
 } from '@mui/icons-material'
-import { Outlet } from 'react-router'
+import { Outlet, useNavigate } from 'react-router'
+import { styled } from '@mui/material/styles'
+import { grey } from '@mui/material/colors'
 
 const drawerWidth = 280
 
 const Layout: React.FC = () => {
+  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
 
@@ -51,29 +54,40 @@ const Layout: React.FC = () => {
     setSelectedChat(chatId)
   }
 
+  const ColorButton = styled(Button)<ButtonProps>(({ theme }) => ({
+    color: theme.palette.getContrastText(grey[50]),
+    backgroundColor: grey[50],
+    '&:hover': {
+      backgroundColor: grey[200]
+    },
+    border: 'none'
+  }))
+
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* 新建对话按钮 */}
       <Box sx={{ p: 2 }}>
-        <Button
+        <ColorButton
           variant="outlined"
           startIcon={<AddIcon />}
           fullWidth
           sx={{
             borderRadius: 2,
-            textTransform: 'none',
-            fontSize: '14px',
-            py: 1.5,
-            borderColor: 'rgba(255,255,255,0.2)',
-            color: 'text.primary',
-            '&:hover': {
-              borderColor: 'rgba(255,255,255,0.3)',
-              backgroundColor: 'rgba(255,255,255,0.05)'
-            }
+            mb: 1
           }}
         >
           新建对话
-        </Button>
+        </ColorButton>
+        <ColorButton
+          variant="outlined"
+          startIcon={<StorageIcon />}
+          fullWidth
+          sx={{
+            borderRadius: 2
+          }}
+          onClick={() => navigate('/database-connection')}
+        >
+          新建数据库连接
+        </ColorButton>
       </Box>
 
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
@@ -97,7 +111,6 @@ const Layout: React.FC = () => {
                 sx={{
                   borderRadius: 1,
                   mx: 1,
-                  mb: 0.5,
                   '&.Mui-selected': {
                     backgroundColor: 'rgba(255,255,255,0.1)',
                     '&:hover': {
@@ -109,9 +122,6 @@ const Layout: React.FC = () => {
                   }
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 36 }}>
-                  <ChatIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
-                </ListItemIcon>
                 <ListItemText
                   primary={
                     <Typography
@@ -128,30 +138,15 @@ const Layout: React.FC = () => {
                       {chat.title}
                     </Typography>
                   }
-                  secondary={
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontSize: '12px',
-                        color: 'text.disabled'
-                      }}
-                    >
-                      {chat.date}
-                    </Typography>
-                  }
                 />
                 <Box
                   className="chat-actions"
                   sx={{
                     opacity: 0,
                     transition: 'opacity 0.2s',
-                    display: 'flex',
-                    gap: 0.5
+                    display: 'flex'
                   }}
                 >
-                  <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                    <EditIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
                   <IconButton size="small" sx={{ color: 'text.secondary' }}>
                     <DeleteIcon sx={{ fontSize: 16 }} />
                   </IconButton>

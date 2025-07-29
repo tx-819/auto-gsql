@@ -91,15 +91,7 @@ const ChatPage: React.FC = () => {
           overflowY: 'auto',
           overflowX: 'hidden',
           scrollbarWidth: 'thin',
-          scrollbarColor: '#bdbdbd #ececf1',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            background: '#ececf1'
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: '#bdbdbd',
-            borderRadius: '4px'
-          }
+          scrollbarColor: '#bdbdbd #ececf1'
         }}
       >
         <Box sx={{ width: '100%', maxWidth: 700, mx: 'auto' }}>
@@ -256,13 +248,11 @@ const ChatPage: React.FC = () => {
       <Box
         sx={{
           width: '100%',
-          maxWidth: 700,
-          position: 'sticky',
-          bottom: 0,
-          left: 0,
           bgcolor: 'transparent',
-          zIndex: 10,
-          pb: 2
+          pb: 2,
+          display: 'flex',
+          justifyContent: 'center',
+          px: { xs: 0, sm: 2 }
         }}
       >
         <Paper
@@ -270,11 +260,13 @@ const ChatPage: React.FC = () => {
           sx={{
             px: 2,
             py: 1,
-            gap: 1,
+            mx: 1,
+            flex: 1,
             display: 'flex',
             flexDirection: 'column',
             borderRadius: 6,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            maxWidth: 700
           }}
         >
           <TextField
@@ -301,8 +293,10 @@ const ChatPage: React.FC = () => {
                 borderBottom: 'none'
               }
             }}
-            InputProps={{
-              disableUnderline: true
+            slotProps={{
+              input: {
+                disableUnderline: true
+              }
             }}
           />
           <IconButton
