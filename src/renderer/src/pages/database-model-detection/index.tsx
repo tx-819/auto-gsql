@@ -71,10 +71,20 @@ const DatabaseModelDetection: React.FC = () => {
     host: 'localhost'
   }
 
+  // 检查是否是从聊天页面跳转过来的（跳过AI检测）
+  const isFromChat = location.state?.fromChat || false
+
   useEffect(() => {
-    // 页面加载时自动开始检测
-    handleDetectModel()
-  }, [])
+    if (isFromChat) {
+      // 从聊天页面跳转过来，直接加载现有数据，跳过AI检测
+      setTables(mockTables)
+      setRelations(mockRelations)
+      setDetectionComplete(true)
+    } else {
+      // 正常流程，进行AI检测
+      handleDetectModel()
+    }
+  }, [isFromChat])
 
   const handleDetectModel = async (): Promise<void> => {
     setIsDetecting(true)

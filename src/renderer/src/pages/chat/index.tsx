@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import {
   Box,
   Paper,
@@ -12,13 +13,15 @@ import {
   Select,
   MenuItem,
   Alert,
-  Chip
+  Chip,
+  Button
 } from '@mui/material'
 import {
   Send as SendIcon,
   SmartToy as AgentIcon,
   Chat as ChatIcon,
-  Storage as DatabaseIcon
+  Storage as DatabaseIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material'
 
 interface Message {
@@ -39,6 +42,7 @@ interface DatabaseConnection {
 }
 
 const ChatPage: React.FC = () => {
+  const navigate = useNavigate()
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -86,6 +90,23 @@ const ChatPage: React.FC = () => {
       return
     }
     setSelectedDatabase(databaseId)
+  }
+
+  const handleNavigateToModelDetection = (): void => {
+    const selectedDb = databaseConnections.find((db) => db.id === selectedDatabase)
+    if (selectedDb) {
+      navigate('/database-model-detection', {
+        state: {
+          connectionInfo: {
+            name: selectedDb.name,
+            type: selectedDb.type,
+            host: selectedDb.host,
+            database: selectedDb.database
+          },
+          fromChat: true
+        }
+      })
+    }
   }
 
   const handleSendMessage = async (): Promise<void> => {
@@ -304,6 +325,25 @@ const ChatPage: React.FC = () => {
                   size="small"
                   sx={{ height: 28, fontSize: '0.75rem' }}
                 />
+              )}
+
+              {selectedDatabase && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<SettingsIcon />}
+                  onClick={handleNavigateToModelDetection}
+                  disabled={messages.length > 0}
+                  sx={{
+                    height: 28,
+                    fontSize: '0.75rem',
+                    px: 1.5,
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  模型关系
+                </Button>
               )}
             </Box>
 
