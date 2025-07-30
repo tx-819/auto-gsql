@@ -186,7 +186,6 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
                   })
                 }
               }}
-              disabled={messagesLength > 0}
               sx={{
                 height: 28,
                 fontSize: '0.75rem',

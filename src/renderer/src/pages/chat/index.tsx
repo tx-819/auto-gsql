@@ -93,7 +93,11 @@ const ChatPage: React.FC = () => {
       }}
     >
       {/* 模式切换区域 */}
-      <ModeSelector chatMode={chatMode} onModeChange={setChatMode} />
+      <ModeSelector
+        chatMode={chatMode}
+        onModeChange={setChatMode}
+        messagesLength={messages.length}
+      />
 
       {/* 数据库选择区域 - 仅在agent模式下显示 */}
       {chatMode === 'agent' && (

@@ -7,9 +7,10 @@ type ChatMode = 'chat' | 'agent'
 interface ModeSelectorProps {
   chatMode: ChatMode
   onModeChange: (mode: ChatMode) => void
+  messagesLength: number
 }
 
-const ModeSelector: React.FC<ModeSelectorProps> = ({ chatMode, onModeChange }) => {
+const ModeSelector: React.FC<ModeSelectorProps> = ({ chatMode, onModeChange, messagesLength }) => {
   const handleModeChange = (
     event: React.MouseEvent<HTMLElement>,
     newMode: ChatMode | null
@@ -76,11 +77,11 @@ const ModeSelector: React.FC<ModeSelectorProps> = ({ chatMode, onModeChange }) =
             }
           }}
         >
-          <ToggleButton value="chat">
+          <ToggleButton value="chat" disabled={messagesLength > 0}>
             <ChatIcon sx={{ mr: 1, fontSize: 20 }} />
             <Box sx={{ fontWeight: 500 }}>Chat</Box>
           </ToggleButton>
-          <ToggleButton value="agent">
+          <ToggleButton value="agent" disabled={messagesLength > 0}>
             <AgentIcon sx={{ mr: 1, fontSize: 20 }} />
             <Box sx={{ fontWeight: 500 }}>Agent</Box>
           </ToggleButton>
