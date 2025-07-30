@@ -4,7 +4,14 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   getSettings: () => ipcRenderer.invoke('get-settings'),
-  saveSettings: (settings: unknown) => ipcRenderer.invoke('save-settings', settings)
+  saveSettings: (settings: unknown) => ipcRenderer.invoke('save-settings', settings),
+  getCurrentUser: () => ipcRenderer.invoke('get-current-user'),
+  saveUserSession: (userData: string) => ipcRenderer.invoke('save-user-session', userData),
+  clearUserSession: () => ipcRenderer.invoke('clear-user-session'),
+  login: (credentials: { username: string; password: string }) =>
+    ipcRenderer.invoke('login', credentials),
+  register: (userData: { username: string; email: string; password: string }) =>
+    ipcRenderer.invoke('register', userData)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

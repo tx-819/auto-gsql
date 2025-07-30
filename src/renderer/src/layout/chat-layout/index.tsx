@@ -42,7 +42,7 @@ const Layout: React.FC = () => {
     setMobileOpen(!mobileOpen)
   }
 
-  // 模拟对话历史数据
+  // 模拟话题数据
   const chatHistory = [
     { id: '1', title: '如何学习React', date: '2024-01-15', type: 'chat' },
     { id: '2', title: 'TypeScript最佳实践', date: '2024-01-14', type: 'chat' },
