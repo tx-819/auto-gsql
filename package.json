@@ -27,7 +27,8 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
-    "electron-updater": "^6.3.9"
+    "electron-updater": "^6.3.9",
+    "keytar": "^7.9.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
@@ -55,6 +56,11 @@
     "onlyBuiltDependencies": [
       "electron",
       "esbuild"
+    ],
+    "enablePrePostScripts": true,
+    "unsafePerm": true,
+    "ignoredBuiltDependencies": [
+      "keytar"
     ]
   }
 }

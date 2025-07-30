@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import * as keytar from 'keytar'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -47,6 +48,27 @@ app.whenReady().then(() => {
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
+  })
+
+  // IPC handlers for settings
+  ipcMain.handle('get-settings', async () => {
+    try {
+      const settings = await keytar.getPassword('auto-gsql', 'app-settings')
+      return settings ? JSON.parse(settings) : null
+    } catch (error) {
+      console.error('Failed to get settings:', error)
+      return null
+    }
+  })
+
+  ipcMain.handle('save-settings', async (_, settings) => {
+    try {
+      await keytar.setPassword('auto-gsql', 'app-settings', JSON.stringify(settings))
+      return true
+    } catch (error) {
+      console.error('Failed to save settings:', error)
+      return false
+    }
   })
 
   // IPC test

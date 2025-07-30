@@ -24,7 +24,8 @@ import {
   Person as PersonIcon,
   MoreVert as MoreVertIcon,
   Delete as DeleteIcon,
-  Storage as StorageIcon
+  Storage as StorageIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material'
 import { Outlet, useNavigate } from 'react-router'
 import { styled } from '@mui/material/styles'
@@ -227,9 +228,18 @@ const Layout: React.FC = () => {
               backgroundColor: 'primary.main',
               color: 'white',
               fontSize: '12px',
-              height: 24
+              height: 24,
+              mr: 1
             }}
           />
+          <IconButton
+            color="inherit"
+            aria-label="settings"
+            onClick={() => navigate('/settings')}
+            sx={{ color: 'text.secondary' }}
+          >
+            <SettingsIcon />
+          </IconButton>
         </Toolbar>
       </AppBar>
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
