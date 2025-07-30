@@ -18,6 +18,7 @@ import {
   Lock as LockIcon
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router'
+import { login } from '../../utils/auth'
 
 interface LoginForm {
   username: string
@@ -56,25 +57,18 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
-
     if (!form.username.trim() || !form.password.trim()) {
       setError('请输入用户名和密码')
       return
     }
-
     setLoading(true)
     setError('')
-
     try {
-      // 模拟登录请求
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       // 使用登录API
-      const success = await window.api.login({
+      const success = await login({
         username: form.username,
         password: form.password
       })
-
       if (success) {
         // 登录成功，跳转到主页面
         navigate('/')

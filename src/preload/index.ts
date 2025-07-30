@@ -6,12 +6,9 @@ const api = {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: unknown) => ipcRenderer.invoke('save-settings', settings),
   getCurrentUser: () => ipcRenderer.invoke('get-current-user'),
-  saveUserSession: (userData: string) => ipcRenderer.invoke('save-user-session', userData),
-  clearUserSession: () => ipcRenderer.invoke('clear-user-session'),
-  login: (credentials: { username: string; password: string }) =>
-    ipcRenderer.invoke('login', credentials),
-  register: (userData: { username: string; email: string; password: string }) =>
-    ipcRenderer.invoke('register', userData)
+  getAuthToken: () => ipcRenderer.invoke('get-auth-token'),
+  saveAuthToken: (token: string) => ipcRenderer.invoke('save-auth-token', token),
+  clearAuthToken: () => ipcRenderer.invoke('clear-auth-token')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -87,16 +87,12 @@ const Register: React.FC = () => {
     setError('')
 
     try {
-      // 模拟注册请求
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
       // 使用注册API
       const success = await register({
         username: form.username,
         email: form.email,
         password: form.password
       })
-
       if (success) {
         // 注册成功，跳转到登录页面
         navigate('/login', {

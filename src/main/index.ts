@@ -14,7 +14,11 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false
     }
   })
 
@@ -71,106 +75,33 @@ app.whenReady().then(() => {
     }
   })
 
-  // IPC handlers for authentication
-  ipcMain.handle('get-current-user', async () => {
+  // Token管理
+  ipcMain.handle('get-auth-token', async () => {
     try {
-      const userData = await keytar.getPassword('auto-gsql', 'current-user')
-      return userData
+      const token = await keytar.getPassword('auto-gsql', 'auth-token')
+      return token
     } catch (error) {
-      console.error('Failed to get current user:', error)
+      console.error('Failed to get auth token:', error)
       return null
     }
   })
 
-  ipcMain.handle('save-user-session', async (_, userData) => {
+  ipcMain.handle('save-auth-token', async (_, token) => {
     try {
-      await keytar.setPassword('auto-gsql', 'current-user', userData)
+      await keytar.setPassword('auto-gsql', 'auth-token', token)
       return true
     } catch (error) {
-      console.error('Failed to save user session:', error)
+      console.error('Failed to save auth token:', error)
       return false
     }
   })
 
-  ipcMain.handle('clear-user-session', async () => {
+  ipcMain.handle('clear-auth-token', async () => {
     try {
-      await keytar.deletePassword('auto-gsql', 'current-user')
+      await keytar.deletePassword('auto-gsql', 'auth-token')
       return true
     } catch (error) {
-      console.error('Failed to clear user session:', error)
-      return false
-    }
-  })
-
-  ipcMain.handle('login', async (_, credentials) => {
-    try {
-      // 这里可以添加实际的登录验证逻辑
-      // 目前使用模拟验证
-      const { username, password } = credentials
-
-      // 从keytar获取用户列表
-      const usersData = await keytar.getPassword('auto-gsql', 'users')
-      const users = usersData
-        ? JSON.parse(usersData)
-        : [
-            { username: 'admin', password: 'admin123', email: 'admin@example.com' },
-            { username: 'user', password: 'user123', email: 'user@example.com' }
-          ]
-
-      const user = users.find((u) => u.username === username && u.password === password)
-
-      if (user) {
-        const userData = JSON.stringify({
-          id: Date.now().toString(),
-          username: user.username,
-          email: user.email
-        })
-        await keytar.setPassword('auto-gsql', 'current-user', userData)
-        return true
-      }
-
-      return false
-    } catch (error) {
-      console.error('Login failed:', error)
-      return false
-    }
-  })
-
-  ipcMain.handle('register', async (_, userData) => {
-    try {
-      const { username, email, password } = userData
-
-      // 从keytar获取现有用户列表
-      const usersData = await keytar.getPassword('auto-gsql', 'users')
-      const users = usersData
-        ? JSON.parse(usersData)
-        : [
-            { username: 'admin', password: 'admin123', email: 'admin@example.com' },
-            { username: 'user', password: 'user123', email: 'user@example.com' }
-          ]
-
-      // 检查用户名和邮箱是否已存在
-      const existingUser = users.find((u) => u.username === username || u.email === email)
-
-      if (existingUser) {
-        return false // 用户已存在
-      }
-
-      // 添加新用户
-      const newUser = {
-        username,
-        email,
-        password
-      }
-
-      users.push(newUser)
-
-      // 保存更新后的用户列表
-      await keytar.setPassword('auto-gsql', 'users', JSON.stringify(users))
-
-      return true
-    } catch (error) {
-      console.error('Registration failed:', error)
+      console.error('Failed to clear auth token:', error)
       return false
     }
   })
