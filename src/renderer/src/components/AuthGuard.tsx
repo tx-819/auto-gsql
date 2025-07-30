@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { Box, CircularProgress } from '@mui/material'
-import { isAuthenticated } from '../utils/auth'
+import { validateToken } from '../services/auth'
 
 interface AuthGuardProps {
   children: React.ReactNode
+}
+
+const isAuthenticated = async (): Promise<boolean> => {
+  try {
+    const token = await window.api.getAuthToken()
+    if (!token) {
+      return false
+    }
+    // 验证Token有效性
+    return await validateToken()
+  } catch (error) {
+    console.error('Auth check failed:', error)
+    return false
+  }
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {

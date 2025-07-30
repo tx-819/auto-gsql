@@ -20,13 +20,28 @@ import {
   Email as EmailIcon
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router'
-import { register } from '../../utils/auth'
+import { registerUser } from '../../services/auth'
 
 interface RegisterForm {
   username: string
   email: string
   password: string
   confirmPassword: string
+}
+
+// 注册
+const register = async (credentials: {
+  username: string
+  email: string
+  password: string
+}): Promise<boolean> => {
+  try {
+    await registerUser(credentials)
+    return true
+  } catch (error) {
+    console.error('Registration failed:', error)
+    return false
+  }
 }
 
 const Register: React.FC = () => {

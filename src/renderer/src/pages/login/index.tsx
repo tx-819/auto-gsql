@@ -18,11 +18,24 @@ import {
   Lock as LockIcon
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router'
-import { login } from '../../utils/auth'
+import { loginUser } from '../../services/auth'
 
 interface LoginForm {
   username: string
   password: string
+}
+
+const login = async (credentials: { username: string; password: string }): Promise<boolean> => {
+  try {
+    const response = await loginUser(credentials)
+
+    // 保存Token到keytar
+    const success = await window.api.saveAuthToken(response.data.access_token)
+    return success
+  } catch (error) {
+    console.error('Login failed:', error)
+    return false
+  }
 }
 
 const Login: React.FC = () => {
