@@ -9,7 +9,6 @@ export interface SendMessageRequest {
   apiKey: string // AI服务API密钥
   baseURL?: string // AI服务基础URL，默认使用OpenAI
   model?: string // 对话模型名称，默认gpt-3.5-turbo
-  embeddingModel?: string // 嵌入模型名称，默认text-embedding-ada-002
 }
 
 // 消息发送响应

@@ -20,7 +20,6 @@ export type AIConfigs = Record<
     apiKey: string
     baseURL: string
     model: string
-    embeddingModel: string
   }
 >
 
@@ -53,14 +52,12 @@ export const defaultAIConfig: AIConfigs = {
   openai: {
     apiKey: '',
     baseURL: 'https://api.openai.com/v1',
-    model: 'gpt-3.5-turbo',
-    embeddingModel: 'text-embedding-ada-002'
+    model: 'gpt-3.5-turbo'
   },
   deepseek: {
     apiKey: 'sk-ceaf96b004774124bf6a557e8595683f',
     baseURL: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat',
-    embeddingModel: 'deepseek-embed'
+    model: 'deepseek-chat'
   }
 }
 
@@ -135,8 +132,7 @@ export const useChatStore = create<ChatState>()(
             topicId,
             apiKey: selectedConfig.apiKey,
             baseURL: selectedConfig.baseURL,
-            model: selectedConfig.model,
-            embeddingModel: selectedConfig.embeddingModel
+            model: selectedConfig.model
           }
 
           const response = await sendMessage(messageData)
