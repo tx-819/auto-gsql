@@ -45,5 +45,10 @@ export const request = async <T>(
     }
   }
   const response = await fetch(url, defaultOptions)
+  // 如果响应状态码为401，则清除Token并重定向到登录页面
+  if (response.status === 401) {
+    await window.api.clearAuthToken()
+    window.location.href = '/login'
+  }
   return await response.json()
 }

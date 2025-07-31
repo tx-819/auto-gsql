@@ -7,17 +7,13 @@ import {
   MessageContainer,
   LoadingMessage,
   DatabaseSelector,
-  ModeSelector
+  ModeSelector,
+  ModelSelector
 } from './_components'
-
-interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: Date
-}
+import { useChatStore } from '../../stores'
 
 type ChatMode = 'chat' | 'agent'
+type AIProvider = 'openai' | 'deepseek'
 
 interface DatabaseConnection {
   id: string
@@ -28,51 +24,36 @@ interface DatabaseConnection {
 }
 
 const ChatPage: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [chatMode, setChatMode] = useState<ChatMode>('chat')
   const [selectedDatabase, setSelectedDatabase] = useState<DatabaseConnection | null>(null)
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('deepseek')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { currentTopicId, loadMessages, messages, sendMessage, isLoading } = useChatStore()
 
   const scrollToBottom = (): void => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const currentMessages = messages[currentTopicId as number] || []
+
   useEffect(() => {
+    if (currentTopicId) {
+      loadMessages(currentTopicId)
+    }
     scrollToBottom()
-  }, [messages])
+  }, [currentTopicId, loadMessages])
 
   const handleSendMessage = async (): Promise<void> => {
     if (!inputValue.trim()) return
-
     // agent模式下必须选择数据库
     if (chatMode === 'agent' && !selectedDatabase) {
       return
     }
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      role: 'user',
-      timestamp: new Date()
+    const success = await sendMessage(inputValue, currentTopicId as number, selectedProvider)
+    if (success) {
+      setInputValue('')
     }
-
-    setMessages((prev) => [...prev, userMessage])
-    setInputValue('')
-    setIsLoading(true)
-
-    // 模拟AI回复
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `我收到了你的消息："${userMessage.content}"。这是一个模拟的AI回复。当前模式：${chatMode === 'chat' ? '聊天模式' : `智能代理模式 (数据库: ${selectedDatabase?.name || '未选择'})`}`,
-        role: 'assistant',
-        timestamp: new Date()
-      }
-      setMessages((prev) => [...prev, aiMessage])
-      setIsLoading(false)
-    }, 1000)
   }
 
   const canSendMessage = (): boolean => {
@@ -96,17 +77,17 @@ const ChatPage: React.FC = () => {
       <ModeSelector
         chatMode={chatMode}
         onModeChange={setChatMode}
-        messagesLength={messages.length}
+        messagesLength={currentMessages.length}
       />
 
       {/* 数据库选择区域 - 仅在agent模式下显示 */}
       {chatMode === 'agent' && (
         <DatabaseSelector
           selectedDatabase={selectedDatabase}
-          messagesLength={messages.length}
+          messagesLength={currentMessages.length}
           onDatabaseChange={(database: DatabaseConnection) => {
             // 如果已经有聊天内容，不允许变更数据库
-            if (messages.length > 0) {
+            if (currentMessages.length > 0) {
               return
             }
             setSelectedDatabase(database)
@@ -133,7 +114,7 @@ const ChatPage: React.FC = () => {
         }}
       >
         <Box sx={{ width: '100%', maxWidth: 700, mx: 'auto' }}>
-          {messages.map((message) => (
+          {currentMessages.map((message) => (
             <MessageContainer key={message.id} isUser={message.role === 'user'}>
               {message.role === 'user' ? (
                 <UserMessage content={message.content} />
@@ -157,7 +138,9 @@ const ChatPage: React.FC = () => {
           bgcolor: 'transparent',
           pb: 2,
           display: 'flex',
-          justifyContent: 'center',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1,
           px: { xs: 0, sm: 2 }
         }}
       >
@@ -170,9 +153,11 @@ const ChatPage: React.FC = () => {
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'flex-end',
             borderRadius: 6,
             boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-            maxWidth: 700
+            maxWidth: 700,
+            width: '100%'
           }}
         >
           <TextField
@@ -205,16 +190,36 @@ const ChatPage: React.FC = () => {
               }
             }}
           />
-          <IconButton
-            onClick={handleSendMessage}
-            disabled={!canSendMessage() || isLoading}
-            color="primary"
+          <Box
             sx={{
-              alignSelf: 'flex-end'
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%'
             }}
           >
-            <SendIcon />
-          </IconButton>
+            {/* 大模型选择器 */}
+            <ModelSelector
+              selectedProvider={selectedProvider}
+              onProviderChange={(provider: AIProvider) => {
+                // 如果已经有聊天内容，不允许变更模型
+                if (currentMessages.length > 0) {
+                  return
+                }
+                setSelectedProvider(provider)
+              }}
+              messagesLength={currentMessages.length}
+            />
+
+            <IconButton
+              onClick={handleSendMessage}
+              disabled={!canSendMessage() || isLoading}
+              color="primary"
+            >
+              <SendIcon />
+            </IconButton>
+          </Box>
         </Paper>
       </Box>
     </Box>

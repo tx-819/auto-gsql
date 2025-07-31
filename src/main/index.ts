@@ -55,22 +55,22 @@ app.whenReady().then(() => {
   })
 
   // IPC handlers for settings
-  ipcMain.handle('get-settings', async () => {
+  ipcMain.handle('get-ai-config', async (_, provider) => {
     try {
-      const settings = await keytar.getPassword('auto-gsql', 'app-settings')
-      return settings ? JSON.parse(settings) : null
+      const config = await keytar.getPassword('auto-gsql', `ai-config-${provider}`)
+      return config ? JSON.parse(config) : null
     } catch (error) {
-      console.error('Failed to get settings:', error)
+      console.error('Failed to get ai config:', error)
       return null
     }
   })
 
-  ipcMain.handle('save-settings', async (_, settings) => {
+  ipcMain.handle('save-ai-config', async (_, provider, config) => {
     try {
-      await keytar.setPassword('auto-gsql', 'app-settings', JSON.stringify(settings))
+      await keytar.setPassword('auto-gsql', `ai-config-${provider}`, JSON.stringify(config))
       return true
     } catch (error) {
-      console.error('Failed to save settings:', error)
+      console.error('Failed to save ai config:', error)
       return false
     }
   })

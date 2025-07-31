@@ -12,7 +12,7 @@ interface ModeSelectorProps {
 
 const ModeSelector: React.FC<ModeSelectorProps> = ({ chatMode, onModeChange, messagesLength }) => {
   const handleModeChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     newMode: ChatMode | null
   ): void => {
     if (newMode !== null) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   AppBar,
   Box,
@@ -30,29 +30,23 @@ import {
 import { Outlet, useNavigate } from 'react-router'
 import { styled } from '@mui/material/styles'
 import { grey } from '@mui/material/colors'
+import { useAuthStore, useChatStore } from '../../stores'
 
 const drawerWidth = 280
 
 const Layout: React.FC = () => {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [selectedChat, setSelectedChat] = useState<string | null>(null)
+  const [selectedChat, setSelectedChat] = useState<number | null>(null)
+  const { topics, loadTopics, deleteMessages, currentTopicId } = useChatStore()
+  const { user } = useAuthStore()
+
+  useEffect(() => {
+    loadTopics()
+  }, [loadTopics])
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen)
-  }
-
-  // 模拟话题数据
-  const chatHistory = [
-    { id: '1', title: '如何学习React', date: '2024-01-15', type: 'chat' },
-    { id: '2', title: 'TypeScript最佳实践', date: '2024-01-14', type: 'chat' },
-    { id: '3', title: 'Material-UI组件使用', date: '2024-01-13', type: 'chat' },
-    { id: '4', title: 'Electron应用开发', date: '2024-01-12', type: 'chat' },
-    { id: '5', title: '前端性能优化', date: '2024-01-11', type: 'chat' }
-  ]
-
-  const handleChatSelect = (chatId: string): void => {
-    setSelectedChat(chatId)
   }
 
   const ColorButton = styled(Button)<ButtonProps>(({ theme }) => ({
@@ -75,6 +69,12 @@ const Layout: React.FC = () => {
             borderRadius: 2,
             mb: 1
           }}
+          onClick={() => {
+            if (currentTopicId) {
+              deleteMessages(currentTopicId)
+            }
+            navigate('/')
+          }}
         >
           新建对话
         </ColorButton>
@@ -96,9 +96,9 @@ const Layout: React.FC = () => {
       {/* 对话历史列表 */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         <List sx={{ py: 0 }}>
-          {chatHistory.map((chat) => (
+          {topics.map((topic) => (
             <ListItem
-              key={chat.id}
+              key={topic.id}
               disablePadding
               sx={{
                 '&:hover .chat-actions': {
@@ -107,8 +107,11 @@ const Layout: React.FC = () => {
               }}
             >
               <ListItemButton
-                selected={selectedChat === chat.id}
-                onClick={() => handleChatSelect(chat.id)}
+                selected={selectedChat === topic.id}
+                onClick={() => {
+                  setSelectedChat(topic.id)
+                  navigate(`/chat/${topic.id}`)
+                }}
                 sx={{
                   borderRadius: 1,
                   mx: 1,
@@ -129,14 +132,14 @@ const Layout: React.FC = () => {
                       variant="body2"
                       sx={{
                         fontSize: '14px',
-                        fontWeight: selectedChat === chat.id ? 500 : 400,
-                        color: selectedChat === chat.id ? 'text.primary' : 'text.secondary',
+                        fontWeight: selectedChat === topic.id ? 500 : 400,
+                        color: selectedChat === topic.id ? 'text.primary' : 'text.secondary',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      {chat.title}
+                      {topic.title}
                     </Typography>
                   }
                 />
@@ -178,7 +181,7 @@ const Layout: React.FC = () => {
           <ListItemText
             primary={
               <Typography variant="body2" sx={{ fontSize: '14px', fontWeight: 500 }}>
-                用户
+                {user?.username}
               </Typography>
             }
             secondary={

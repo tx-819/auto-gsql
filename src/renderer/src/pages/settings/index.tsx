@@ -14,15 +14,10 @@ import {
   Stack
 } from '@mui/material'
 import { Save as SaveIcon, Key as KeyIcon } from '@mui/icons-material'
-import { loadSettings, saveSettings, type AppSettings } from '../../utils/settings'
-import { checkAndMigrate } from '../../utils/migrateSettings'
+import { useChatStore } from '../../stores'
 
 const Settings: React.FC = () => {
-  const [settings, setSettings] = useState<AppSettings>({
-    openaiApiKey: '',
-    openaiBaseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4'
-  })
+  const { aiConfigs, setAIConfig, getAIConfig } = useChatStore()
   const [showApiKey, setShowApiKey] = useState(false)
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -33,16 +28,14 @@ const Settings: React.FC = () => {
   useEffect(() => {
     // 从keytar加载设置
     const loadSettingsData = async (): Promise<void> => {
-      // 检查并迁移旧设置
-      await checkAndMigrate()
-      const loadedSettings = await loadSettings()
-      setSettings(loadedSettings)
+      await getAIConfig('openai')
+      await getAIConfig('deepseek')
     }
     loadSettingsData()
-  }, [])
+  }, [getAIConfig, setAIConfig])
 
   const handleSave = async (): Promise<void> => {
-    const success = await saveSettings(settings)
+    const success = await setAIConfig('openai', aiConfigs.openai)
     setSnackbar({
       open: true,
       message: success ? '设置已保存' : '保存失败',
@@ -51,7 +44,7 @@ const Settings: React.FC = () => {
   }
 
   const handleTestConnection = async (): Promise<void> => {
-    if (!settings.openaiApiKey) {
+    if (!aiConfigs.openai?.apiKey) {
       setSnackbar({
         open: true,
         message: '请先输入API Key',
@@ -96,17 +89,19 @@ const Settings: React.FC = () => {
                 fullWidth
                 label="API Key"
                 type={showApiKey ? 'text' : 'password'}
-                value={settings.openaiApiKey}
-                onChange={(e) => setSettings((prev) => ({ ...prev, openaiApiKey: e.target.value }))}
+                value={aiConfigs.openai?.apiKey}
+                onChange={(e) =>
+                  setAIConfig('openai', { ...aiConfigs.openai!, apiKey: e.target.value })
+                }
                 placeholder="sk-..."
                 helperText="请输入您的OpenAI API Key"
               />
               <TextField
                 fullWidth
                 label="API Base URL"
-                value={settings.openaiBaseUrl}
+                value={aiConfigs.openai?.baseURL}
                 onChange={(e) =>
-                  setSettings((prev) => ({ ...prev, openaiBaseUrl: e.target.value }))
+                  setAIConfig('openai', { ...aiConfigs.openai!, baseURL: e.target.value })
                 }
                 placeholder="https://api.openai.com/v1"
                 helperText="OpenAI API的基础URL，如果使用代理请修改"
@@ -125,6 +120,35 @@ const Settings: React.FC = () => {
                   label="显示API Key"
                 />
               </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader title="DeepSeek API 配置" avatar={<KeyIcon color="primary" />} />
+          <CardContent>
+            <Stack spacing={2}>
+              <TextField
+                fullWidth
+                label="API Key"
+                type={showApiKey ? 'text' : 'password'}
+                value={aiConfigs.deepseek?.apiKey}
+                onChange={(e) =>
+                  setAIConfig('deepseek', { ...aiConfigs.deepseek!, apiKey: e.target.value })
+                }
+                placeholder="sk-..."
+                helperText="请输入您的DeepSeek API Key"
+              />
+              <TextField
+                fullWidth
+                label="API Base URL"
+                value={aiConfigs.deepseek?.baseURL}
+                onChange={(e) =>
+                  setAIConfig('deepseek', { ...aiConfigs.deepseek!, baseURL: e.target.value })
+                }
+                placeholder="https://api.deepseek.com/v1"
+                helperText="DeepSeek API的基础URL，如果使用代理请修改"
+              />
             </Stack>
           </CardContent>
         </Card>

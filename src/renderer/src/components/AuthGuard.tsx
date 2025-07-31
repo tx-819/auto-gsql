@@ -1,46 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router'
 import { Box, CircularProgress } from '@mui/material'
-import { validateToken } from '../services/auth'
+import { useAuthStore } from '../stores'
 
 interface AuthGuardProps {
   children: React.ReactNode
 }
 
-const isAuthenticated = async (): Promise<boolean> => {
-  try {
-    const token = await window.api.getAuthToken()
-    if (!token) {
-      return false
-    }
-    // 验证Token有效性
-    return await validateToken()
-  } catch (error) {
-    console.error('Auth check failed:', error)
-    return false
-  }
-}
-
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const [loading, setLoading] = useState(true)
-  const [authenticated, setAuthenticated] = useState(false)
+  const { isAuthenticated, checkAuth } = useAuthStore()
   const location = useLocation()
 
   useEffect(() => {
-    const checkAuth = async (): Promise<void> => {
+    const initAuth = async (): Promise<void> => {
       try {
-        const isAuth = await isAuthenticated()
-        setAuthenticated(isAuth)
-      } catch (error) {
-        console.error('Auth check failed:', error)
-        setAuthenticated(false)
+        await checkAuth()
+      } catch {
+        setLoading(false)
       } finally {
         setLoading(false)
       }
     }
-
-    checkAuth()
-  }, [])
+    initAuth()
+  }, [checkAuth])
 
   if (loading) {
     return (
@@ -58,7 +41,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     )
   }
 
-  if (!authenticated) {
+  if (!isAuthenticated) {
     // 保存当前路径，登录后可以重定向回来
     return <Navigate to="/login" state={{ from: location }} replace />
   }
