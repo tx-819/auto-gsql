@@ -15,6 +15,7 @@ interface SettingsAPI {
   getAuthToken: () => Promise<string | null>
   saveAuthToken: (token: string) => Promise<boolean>
   clearAuthToken: () => Promise<boolean>
+  openExternalLink: (url: string) => Promise<boolean>
 }
 
 declare global {

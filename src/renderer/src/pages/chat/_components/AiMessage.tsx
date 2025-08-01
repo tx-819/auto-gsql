@@ -8,6 +8,14 @@ interface AiMessageProps {
 }
 
 const AiMessage: React.FC<AiMessageProps> = ({ content }) => {
+  const handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>): void => {
+    event.preventDefault()
+    const url = event.currentTarget.href
+    if (url) {
+      window.api.openExternalLink(url)
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -184,7 +192,18 @@ const AiMessage: React.FC<AiMessageProps> = ({ content }) => {
         }
       }}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          a: ({ href, children, ...props }) => (
+            <a href={href} onClick={handleLinkClick} {...props}>
+              {children}
+            </a>
+          )
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </Box>
   )
 }

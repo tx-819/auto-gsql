@@ -109,6 +109,17 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // 打开外部链接
+  ipcMain.handle('open-external-link', async (_, url) => {
+    try {
+      await shell.openExternal(url)
+      return true
+    } catch (error) {
+      console.error('Failed to open external link:', error)
+      return false
+    }
+  })
+
   createWindow()
 
   app.on('activate', function () {

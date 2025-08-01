@@ -9,7 +9,8 @@ const api = {
     ipcRenderer.invoke('save-ai-config', provider, config),
   getAuthToken: () => ipcRenderer.invoke('get-auth-token'),
   saveAuthToken: (token: string) => ipcRenderer.invoke('save-auth-token', token),
-  clearAuthToken: () => ipcRenderer.invoke('clear-auth-token')
+  clearAuthToken: () => ipcRenderer.invoke('clear-auth-token'),
+  openExternalLink: (url: string) => ipcRenderer.invoke('open-external-link', url)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
