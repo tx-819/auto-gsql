@@ -16,9 +16,9 @@ const API_CONFIG = {
 const API_BASE_URL = API_CONFIG.BASE_URL
 
 export interface ApiResponse<T> {
+  code: number
   data: T
   message: string
-  status: number
 }
 
 // 请求拦截器

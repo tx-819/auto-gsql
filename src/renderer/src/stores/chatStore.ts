@@ -136,8 +136,7 @@ export const useChatStore = create<ChatState>()(
           }
 
           const response = await sendMessage(messageData)
-
-          if (response.status === 200) {
+          if (response.code === 200) {
             const { messageId, topicId: newTopicId, content: aiContent, topicTitle } = response.data
 
             // 更新话题列表（如果是新话题）
@@ -209,7 +208,7 @@ export const useChatStore = create<ChatState>()(
         try {
           const response = await archiveTopic(topicId)
 
-          if (response.status === 200) {
+          if (response.code === 200) {
             set((state) => ({
               topics: state.topics.map((topic) =>
                 topic.id === topicId ? { ...topic, status: 2 } : topic
@@ -238,7 +237,7 @@ export const useChatStore = create<ChatState>()(
         try {
           const response = await deleteTopic(topicId)
 
-          if (response.status === 200) {
+          if (response.code === 200) {
             set((state) => {
               const newMessages = { ...state.messages }
               delete newMessages[topicId]

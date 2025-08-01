@@ -37,8 +37,7 @@ const drawerWidth = 280
 const Layout: React.FC = () => {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [selectedChat, setSelectedChat] = useState<number | null>(null)
-  const { topics, loadTopics, deleteMessages, currentTopicId } = useChatStore()
+  const { topics, loadTopics, deleteMessages, currentTopicId, setCurrentTopic } = useChatStore()
   const { user } = useAuthStore()
 
   useEffect(() => {
@@ -107,10 +106,10 @@ const Layout: React.FC = () => {
               }}
             >
               <ListItemButton
-                selected={selectedChat === topic.id}
+                selected={currentTopicId === topic.id}
                 onClick={() => {
-                  setSelectedChat(topic.id)
-                  navigate(`/chat/${topic.id}`)
+                  setCurrentTopic(topic.id)
+                  navigate('/')
                 }}
                 sx={{
                   borderRadius: 1,
@@ -132,8 +131,8 @@ const Layout: React.FC = () => {
                       variant="body2"
                       sx={{
                         fontSize: '14px',
-                        fontWeight: selectedChat === topic.id ? 500 : 400,
-                        color: selectedChat === topic.id ? 'text.primary' : 'text.secondary',
+                        fontWeight: currentTopicId === topic.id ? 500 : 400,
+                        color: currentTopicId === topic.id ? 'text.primary' : 'text.secondary',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'

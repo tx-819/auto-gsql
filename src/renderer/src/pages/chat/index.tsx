@@ -37,6 +37,8 @@ const ChatPage: React.FC = () => {
 
   const currentMessages = messages[currentTopicId as number] || []
 
+  console.log('currentMessages', currentMessages)
+
   useEffect(() => {
     if (currentTopicId) {
       loadMessages(currentTopicId)

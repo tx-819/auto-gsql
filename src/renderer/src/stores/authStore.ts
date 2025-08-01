@@ -45,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await loginUser({ username, password })
 
-          if (response.status === 200) {
+          if (response.code === 200) {
             const { access_token } = response.data
 
             // 保存token
@@ -87,7 +87,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const response = await registerUser({ username, password, email })
 
-          if (response.status === 200) {
+          if (response.code === 200) {
             set({
               isLoading: false,
               error: null
