@@ -15,7 +15,6 @@ import {
   Button,
   Divider,
   Avatar,
-  Chip,
   ButtonProps
 } from '@mui/material'
 import {
@@ -221,17 +220,6 @@ const Layout: React.FC = () => {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Auto GSQL
           </Typography>
-          <Chip
-            label="GPT-4"
-            size="small"
-            sx={{
-              backgroundColor: 'primary.main',
-              color: 'white',
-              fontSize: '12px',
-              height: 24,
-              mr: 1
-            }}
-          />
           <IconButton
             color="inherit"
             aria-label="settings"

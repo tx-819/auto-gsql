@@ -35,38 +35,13 @@ const Settings: React.FC = () => {
   }, [getAIConfig, setAIConfig])
 
   const handleSave = async (): Promise<void> => {
-    const success = await setAIConfig('openai', aiConfigs.openai)
+    const success = await setAIConfig('openai', aiConfigs.openai!)
+    const success2 = await setAIConfig('deepseek', aiConfigs.deepseek!)
     setSnackbar({
       open: true,
-      message: success ? '设置已保存' : '保存失败',
-      severity: success ? 'success' : 'error'
+      message: success && success2 ? '设置已保存' : '保存失败',
+      severity: success && success2 ? 'success' : 'error'
     })
-  }
-
-  const handleTestConnection = async (): Promise<void> => {
-    if (!aiConfigs.openai?.apiKey) {
-      setSnackbar({
-        open: true,
-        message: '请先输入API Key',
-        severity: 'warning'
-      })
-      return
-    }
-
-    try {
-      // 这里可以添加测试API连接的逻辑
-      setSnackbar({
-        open: true,
-        message: '连接测试成功',
-        severity: 'success'
-      })
-    } catch {
-      setSnackbar({
-        open: true,
-        message: '连接测试失败',
-        severity: 'error'
-      })
-    }
   }
 
   const handleCloseSnackbar = (): void => {
@@ -74,11 +49,10 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
+    <Box sx={{ p: 3, maxWidth: 800, mx: 'auto', height: '100vh', overflow: 'auto' }}>
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
         系统设置
       </Typography>
-
       <Stack spacing={3}>
         {/* API 配置 */}
         <Card>
@@ -106,24 +80,9 @@ const Settings: React.FC = () => {
                 placeholder="https://api.openai.com/v1"
                 helperText="OpenAI API的基础URL，如果使用代理请修改"
               />
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Button variant="outlined" onClick={handleTestConnection}>
-                  测试连接
-                </Button>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showApiKey}
-                      onChange={(e) => setShowApiKey(e.target.checked)}
-                    />
-                  }
-                  label="显示API Key"
-                />
-              </Box>
             </Stack>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader title="DeepSeek API 配置" avatar={<KeyIcon color="primary" />} />
           <CardContent>
@@ -155,12 +114,17 @@ const Settings: React.FC = () => {
 
         {/* 保存按钮 */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <FormControlLabel
+            control={
+              <Switch checked={showApiKey} onChange={(e) => setShowApiKey(e.target.checked)} />
+            }
+            label="显示API Key"
+          />
           <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} size="large">
             保存设置
           </Button>
         </Box>
       </Stack>
-
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

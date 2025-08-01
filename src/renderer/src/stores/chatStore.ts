@@ -63,7 +63,7 @@ export const defaultAIConfig: AIConfigs = {
     model: 'gpt-3.5-turbo'
   },
   deepseek: {
-    apiKey: 'sk-ceaf96b004774124bf6a557e8595683f',
+    apiKey: '',
     baseURL: 'https://api.deepseek.com/v1',
     model: 'deepseek-chat'
   }

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
-import { Box, Button, Menu, MenuItem } from '@mui/material'
-import { KeyboardArrowDown } from '@mui/icons-material'
+import { Box, Menu, MenuItem, Chip } from '@mui/material'
 
 type AIProvider = 'openai' | 'deepseek'
 
@@ -42,22 +41,13 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         justifyContent: 'center'
       }}
     >
-      <Button
-        variant="outlined"
+      <Chip
+        label={getProviderDisplayName(selectedProvider)}
+        size="small"
         onClick={handleClick}
         disabled={messagesLength > 0}
-        endIcon={<KeyboardArrowDown />}
-        sx={{
-          minWidth: 120,
-          fontSize: '0.8rem',
-          fontWeight: 500,
-          borderRadius: 2,
-          textTransform: 'none',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
-        }}
-      >
-        {getProviderDisplayName(selectedProvider)}
-      </Button>
+        color="primary"
+      />
       <Menu
         anchorEl={anchorEl}
         open={open}
