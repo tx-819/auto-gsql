@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
-  sendMessageStream,
+  sendMessage,
   getTopics,
   getTopicMessages,
   archiveTopic,
@@ -167,7 +167,7 @@ export const useChatStore = create<ChatState>()(
         let accumulatedContent = ''
 
         try {
-          await sendMessageStream(content, {
+          await sendMessage(content, {
             topicId,
             apiKey: selectedConfig.apiKey,
             baseURL: selectedConfig.baseURL,

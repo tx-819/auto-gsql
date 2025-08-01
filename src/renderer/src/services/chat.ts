@@ -78,21 +78,6 @@ export interface TopicStats {
 // ==================== API函数 ====================
 
 /**
- * 发送消息并获取AI回复
- * @param messageData 消息数据
- * @returns AI回复信息
- */
-export const sendMessage = async (
-  messageData: SendMessageRequest
-): Promise<ApiResponse<SendMessageResponse>> => {
-  const response = (await request<SendMessageResponse>('/chat/send', {
-    method: 'POST',
-    body: JSON.stringify(messageData)
-  })) as ApiResponse<SendMessageResponse>
-  return response
-}
-
-/**
  * 获取当前用户的所有话题列表
  * @returns 话题列表
  */
@@ -142,7 +127,7 @@ export const deleteTopic = async (topicId: number): Promise<ApiResponse<{ succes
  * @param content 消息内容
  * @param options 流式选项
  */
-export const sendMessageStream = async (
+export const sendMessage = async (
   content: string,
   options: StreamMessageOptions
 ): Promise<void> => {
