@@ -148,7 +148,7 @@ export const sendMessageStream = async (
 ): Promise<void> => {
   try {
     const response = (await request(
-      '/chat/send/stream',
+      '/chat/send',
       {
         method: 'POST',
         body: JSON.stringify({
