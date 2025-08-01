@@ -6,10 +6,10 @@ export const registerUser = async (userData: {
   password: string
   email?: string
 }): Promise<ApiResponse<{ id: number; username: string }>> => {
-  const response = await request<{ id: number; username: string }>('/users/register', {
+  const response = (await request<{ id: number; username: string }>('/users/register', {
     method: 'POST',
     body: JSON.stringify(userData)
-  })
+  })) as ApiResponse<{ id: number; username: string }>
   return response
 }
 
@@ -18,16 +18,18 @@ export const loginUser = async (credentials: {
   username: string
   password: string
 }): Promise<ApiResponse<{ access_token: string }>> => {
-  const response = await request<{ access_token: string }>('/auth/login', {
+  const response = (await request<{ access_token: string }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(credentials)
-  })
+  })) as ApiResponse<{ access_token: string }>
   return response
 }
 
 // 获取用户信息
 export const getUserInfo = async (): Promise<{ id: number; username: string; email?: string }> => {
-  const response = await request<{ id: number; username: string; email?: string }>('/users/profile')
+  const response = (await request<{ id: number; username: string; email?: string }>(
+    '/users/profile'
+  )) as ApiResponse<{ id: number; username: string; email?: string }>
   return response.data
 }
 

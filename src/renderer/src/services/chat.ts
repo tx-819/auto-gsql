@@ -19,6 +19,34 @@ export interface SendMessageResponse {
   topicTitle?: string // 话题标题（仅新话题时返回）
 }
 
+// 流式消息块
+export interface StreamChunk {
+  content: string
+  done: boolean
+  topicId?: number
+  messageId?: number
+  topicTitle?: string
+}
+
+// 流式消息结果
+export interface StreamResult {
+  messageId: number
+  topicId: number
+  topicTitle?: string
+  fullContent: string
+}
+
+// 流式消息选项
+export interface StreamMessageOptions {
+  topicId?: number
+  apiKey: string
+  baseURL?: string
+  model?: string
+  onChunk?: (chunk: StreamChunk) => void
+  onComplete?: (result: StreamResult) => void
+  onError?: (error: Error | string) => void
+}
+
 // 话题信息
 export interface Topic {
   id: number // 话题ID
@@ -57,10 +85,10 @@ export interface TopicStats {
 export const sendMessage = async (
   messageData: SendMessageRequest
 ): Promise<ApiResponse<SendMessageResponse>> => {
-  const response = await request<SendMessageResponse>('/chat/send', {
+  const response = (await request<SendMessageResponse>('/chat/send', {
     method: 'POST',
     body: JSON.stringify(messageData)
-  })
+  })) as ApiResponse<SendMessageResponse>
   return response
 }
 
@@ -69,7 +97,7 @@ export const sendMessage = async (
  * @returns 话题列表
  */
 export const getTopics = async (): Promise<Topic[]> => {
-  const response = await request<Topic[]>('/chat/topics')
+  const response = (await request<Topic[]>('/chat/topics')) as ApiResponse<Topic[]>
   return response.data
 }
 
@@ -79,7 +107,9 @@ export const getTopics = async (): Promise<Topic[]> => {
  * @returns 消息列表
  */
 export const getTopicMessages = async (topicId: number): Promise<Message[]> => {
-  const response = await request<Message[]>(`/chat/topics/${topicId}/messages`)
+  const response = (await request<Message[]>(`/chat/topics/${topicId}/messages`)) as ApiResponse<
+    Message[]
+  >
   return response.data
 }
 
@@ -89,9 +119,9 @@ export const getTopicMessages = async (topicId: number): Promise<Message[]> => {
  * @returns 操作结果
  */
 export const archiveTopic = async (topicId: number): Promise<ApiResponse<{ success: boolean }>> => {
-  const response = await request<{ success: boolean }>(`/chat/topics/${topicId}/archive`, {
+  const response = (await request<{ success: boolean }>(`/chat/topics/${topicId}/archive`, {
     method: 'PUT'
-  })
+  })) as ApiResponse<{ success: boolean }>
   return response
 }
 
@@ -101,8 +131,99 @@ export const archiveTopic = async (topicId: number): Promise<ApiResponse<{ succe
  * @returns 操作结果
  */
 export const deleteTopic = async (topicId: number): Promise<ApiResponse<{ success: boolean }>> => {
-  const response = await request<{ success: boolean }>(`/chat/topics/${topicId}`, {
+  const response = (await request<{ success: boolean }>(`/chat/topics/${topicId}`, {
     method: 'DELETE'
-  })
+  })) as ApiResponse<{ success: boolean }>
   return response
+}
+
+/**
+ * 流式发送消息
+ * @param content 消息内容
+ * @param options 流式选项
+ */
+export const sendMessageStream = async (
+  content: string,
+  options: StreamMessageOptions
+): Promise<void> => {
+  try {
+    const response = (await request(
+      '/chat/send/stream',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          content,
+          topicId: options.topicId,
+          apiKey: options.apiKey,
+          baseURL: options.baseURL,
+          model: options.model
+        })
+      },
+      true
+    )) as Response
+
+    const reader = response.body?.getReader()
+    const decoder = new TextDecoder()
+
+    if (!reader) {
+      throw new Error('Response body is null')
+    }
+
+    let buffer = ''
+    let accumulatedContent = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+
+      // 保留最后一个不完整的行
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6))
+
+            if (data.error) {
+              options.onError?.(new Error(data.error))
+              return
+            }
+
+            const chunk: StreamChunk = {
+              content: data.content,
+              done: data.done,
+              topicId: data.topicId,
+              messageId: data.messageId,
+              topicTitle: data.topicTitle
+            }
+
+            if (data.content) {
+              accumulatedContent += data.content
+            }
+
+            options.onChunk?.(chunk)
+
+            if (data.done) {
+              const result: StreamResult = {
+                messageId: data.messageId,
+                topicId: data.topicId,
+                topicTitle: data.topicTitle,
+                fullContent: accumulatedContent
+              }
+              options.onComplete?.(result)
+              return
+            }
+          } catch (error) {
+            console.error('Error parsing SSE data:', error)
+          }
+        }
+      }
+    }
+  } catch (error) {
+    options.onError?.(error instanceof Error ? error : new Error(String(error)))
+  }
 }

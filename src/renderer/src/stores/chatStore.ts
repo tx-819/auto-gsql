@@ -1,14 +1,15 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
-  sendMessage,
+  sendMessageStream,
   getTopics,
   getTopicMessages,
   archiveTopic,
   deleteTopic,
-  type SendMessageRequest,
   type Topic,
-  type Message
+  type Message,
+  type StreamChunk,
+  type StreamResult
 } from '../services/chat'
 
 type AIProvider = 'openai' | 'deepseek'
@@ -28,7 +29,7 @@ interface ChatState {
   // 状态
   topics: Topic[]
   currentTopicId: number | null
-  messages: Record<number, Message[]> // topicId -> messages
+  messages: Message[] // topicId -> messages
   isLoading: boolean
   error: string | null
   aiConfigs: AIConfigs
@@ -36,8 +37,15 @@ interface ChatState {
   // 动作
   loadTopics: () => Promise<void>
   loadMessages: (topicId: number) => Promise<void>
-  deleteMessages: (topicId: number) => Promise<void>
-  sendMessage: (content: string, topicId?: number, provider?: AIProvider) => Promise<boolean>
+  deleteMessages: () => Promise<void>
+  sendMessage: (
+    content: string,
+    onChunk: (chunk: StreamChunk) => void,
+    onComplete: (result: StreamResult) => void,
+    onError: (error: Error | string) => void,
+    topicId?: number,
+    provider?: AIProvider
+  ) => Promise<boolean>
   archiveTopic: (topicId: number) => Promise<boolean>
   deleteTopic: (topicId: number) => Promise<boolean>
   setCurrentTopic: (topicId: number | null) => void
@@ -68,7 +76,7 @@ export const useChatStore = create<ChatState>()(
       // 初始状态
       topics: [],
       currentTopicId: null,
-      messages: {},
+      messages: [],
       isLoading: false,
       error: null,
       aiConfigs: defaultAIConfig,
@@ -92,13 +100,10 @@ export const useChatStore = create<ChatState>()(
 
         try {
           const messages = await getTopicMessages(topicId)
-          set((state) => ({
-            messages: {
-              ...state.messages,
-              [topicId]: messages
-            },
+          set({
+            messages: messages,
             isLoading: false
-          }))
+          })
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '加载消息失败'
           set({ error: errorMessage, isLoading: false })
@@ -106,97 +111,123 @@ export const useChatStore = create<ChatState>()(
       },
 
       // 删除消息
-      deleteMessages: async (topicId: number) => {
-        set((state) => {
-          const newMessages = { ...state.messages }
-          delete newMessages[topicId]
-          return { messages: newMessages, currentTopicId: null }
-        })
+      deleteMessages: async () => {
+        set({ messages: [], currentTopicId: null })
       },
 
-      // 发送消息
-      sendMessage: async (content: string, topicId?: number, provider: AIProvider = 'openai') => {
+      // 流式发送消息
+      sendMessage: async (
+        content: string,
+        onChunk: (chunk: StreamChunk) => void,
+        onComplete: (result: StreamResult) => void,
+        onError: (error: Error | string) => void,
+        topicId?: number,
+        provider: AIProvider = 'openai'
+      ) => {
         const { aiConfigs } = get()
         const selectedConfig = aiConfigs[provider]
 
         if (!selectedConfig?.apiKey) {
-          set({ error: `请先配置${provider === 'openai' ? 'OpenAI' : 'DeepSeek'} API密钥` })
+          const error = new Error(
+            `请先配置${provider === 'openai' ? 'OpenAI' : 'DeepSeek'} API密钥`
+          )
+          set({ error: error.message })
+          onError(error)
           return false
         }
 
         set({ isLoading: true, error: null })
 
+        // 添加用户消息
+        const userMessage: Message = {
+          id: Date.now(),
+          topicId: topicId || 0,
+          userId: 1,
+          role: 'user',
+          content,
+          createdAt: new Date().toISOString()
+        }
+
+        // 创建临时AI消息
+        const tempAiMessage: Message = {
+          id: Date.now() + 1,
+          topicId: topicId || 0,
+          userId: 1,
+          role: 'assistant',
+          content: '',
+          createdAt: new Date().toISOString()
+        }
+
+        // 更新消息列表
+        set((state) => ({
+          messages: [...state.messages, userMessage, tempAiMessage],
+          currentTopicId: topicId || 0
+        }))
+
+        let accumulatedContent = ''
+
         try {
-          const messageData: SendMessageRequest = {
-            content,
+          await sendMessageStream(content, {
             topicId,
             apiKey: selectedConfig.apiKey,
             baseURL: selectedConfig.baseURL,
-            model: selectedConfig.model
-          }
-
-          const response = await sendMessage(messageData)
-          if (response.code === 200) {
-            const { messageId, topicId: newTopicId, content: aiContent, topicTitle } = response.data
-
-            // 更新话题列表（如果是新话题）
-            if (topicTitle) {
+            model: selectedConfig.model,
+            onChunk: (chunk) => {
+              if (chunk.content) {
+                accumulatedContent += chunk.content
+                // 更新AI消息内容
+                set((state) => ({
+                  messages: state.messages.map((msg) =>
+                    msg.id === tempAiMessage.id ? { ...msg, content: accumulatedContent } : msg
+                  )
+                }))
+              }
+              onChunk(chunk)
+            },
+            onComplete: (result) => {
+              // 更新最终消息
               set((state) => ({
-                topics: [
-                  ...state.topics,
-                  {
-                    id: newTopicId,
-                    userId: 1, // 这里应该从auth store获取
-                    title: topicTitle,
-                    status: 1,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                  }
-                ]
+                messages: state.messages.map((msg) =>
+                  msg.id === tempAiMessage.id
+                    ? { ...msg, id: result.messageId, content: result.fullContent }
+                    : msg
+                ),
+                currentTopicId: result.topicId,
+                isLoading: false
               }))
+
+              // 如果是新话题，更新话题列表
+              if (result.topicTitle) {
+                set((state) => ({
+                  topics: [
+                    ...state.topics,
+                    {
+                      id: result.topicId,
+                      userId: 1,
+                      title: result.topicTitle || '新对话',
+                      status: 1,
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString()
+                    }
+                  ]
+                }))
+              }
+
+              onComplete(result)
+            },
+            onError: (error) => {
+              set({
+                isLoading: false,
+                error: error instanceof Error ? error.message : String(error)
+              })
+              onError(error)
             }
-
-            // 添加用户消息
-            const userMessage: Message = {
-              id: Date.now(), // 临时ID
-              topicId: newTopicId,
-              userId: 1, // 这里应该从auth store获取
-              role: 'user',
-              content,
-              createdAt: new Date().toISOString()
-            }
-
-            // 添加AI回复
-            const aiMessage: Message = {
-              id: messageId,
-              topicId: newTopicId,
-              userId: 1, // 这里应该从auth store获取
-              role: 'assistant',
-              content: aiContent,
-              createdAt: new Date().toISOString()
-            }
-
-            // 更新消息列表
-            set((state) => ({
-              messages: {
-                ...state.messages,
-                [newTopicId]: [...(state.messages[newTopicId] || []), userMessage, aiMessage]
-              },
-              currentTopicId: newTopicId,
-              isLoading: false
-            }))
-
-            return true
-          } else {
-            set({
-              isLoading: false,
-              error: response.message || '发送消息失败'
-            })
-            return false
-          }
+          })
+          return true
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : '发送消息失败'
           set({ error: errorMessage, isLoading: false })
+          onError(error instanceof Error ? error : new Error(errorMessage))
           return false
         }
       },

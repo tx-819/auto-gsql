@@ -29,6 +29,8 @@
     "@mui/material": "^7.2.0",
     "electron-updater": "^6.3.9",
     "keytar": "^7.9.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "zustand": "^5.0.7"
   },
   "devDependencies": {

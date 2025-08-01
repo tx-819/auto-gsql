@@ -69,9 +69,7 @@ const Layout: React.FC = () => {
             mb: 1
           }}
           onClick={() => {
-            if (currentTopicId) {
-              deleteMessages(currentTopicId)
-            }
+            deleteMessages()
             navigate('/')
           }}
         >

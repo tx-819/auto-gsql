@@ -13,7 +13,7 @@ const MessageContainer: React.FC<MessageContainerProps> = ({ children, isUser })
         display: 'flex',
         justifyContent: isUser ? 'flex-end' : 'flex-start',
         px: 1,
-        py: 0.5
+        py: 1
       }}
     >
       <Box
@@ -22,8 +22,7 @@ const MessageContainer: React.FC<MessageContainerProps> = ({ children, isUser })
           flexDirection: isUser ? 'row-reverse' : 'row',
           alignItems: 'flex-end',
           gap: 1,
-          width: '100%',
-          maxWidth: '90%'
+          width: '100%'
         }}
       >
         {children}

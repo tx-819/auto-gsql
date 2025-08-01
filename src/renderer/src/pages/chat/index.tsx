@@ -35,16 +35,15 @@ const ChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const currentMessages = messages[currentTopicId as number] || []
-
-  console.log('currentMessages', currentMessages)
-
   useEffect(() => {
     if (currentTopicId) {
       loadMessages(currentTopicId)
     }
-    scrollToBottom()
   }, [currentTopicId, loadMessages])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const handleSendMessage = async (): Promise<void> => {
     if (!inputValue.trim()) return
@@ -52,9 +51,29 @@ const ChatPage: React.FC = () => {
     if (chatMode === 'agent' && !selectedDatabase) {
       return
     }
-    const success = await sendMessage(inputValue, currentTopicId as number, selectedProvider)
-    if (success) {
-      setInputValue('')
+
+    // 使用流式发送消息
+    const success = await sendMessage(
+      inputValue,
+      (chunk) => {
+        // 实时更新消息内容，这里不需要额外处理，因为store已经处理了
+        console.log('收到消息块:', chunk)
+      },
+      (result) => {
+        // 消息发送完成
+        console.log('消息发送完成:', result)
+        setInputValue('')
+      },
+      (error) => {
+        // 处理错误
+        console.error('发送消息失败:', error)
+      },
+      currentTopicId as number,
+      selectedProvider
+    )
+
+    if (!success) {
+      console.error('发送消息失败')
     }
   }
 
@@ -79,17 +98,17 @@ const ChatPage: React.FC = () => {
       <ModeSelector
         chatMode={chatMode}
         onModeChange={setChatMode}
-        messagesLength={currentMessages.length}
+        messagesLength={messages.length}
       />
 
       {/* 数据库选择区域 - 仅在agent模式下显示 */}
       {chatMode === 'agent' && (
         <DatabaseSelector
           selectedDatabase={selectedDatabase}
-          messagesLength={currentMessages.length}
+          messagesLength={messages.length}
           onDatabaseChange={(database: DatabaseConnection) => {
             // 如果已经有聊天内容，不允许变更数据库
-            if (currentMessages.length > 0) {
+            if (messages.length > 0) {
               return
             }
             setSelectedDatabase(database)
@@ -116,7 +135,7 @@ const ChatPage: React.FC = () => {
         }}
       >
         <Box sx={{ width: '100%', maxWidth: 700, mx: 'auto' }}>
-          {currentMessages.map((message) => (
+          {messages.map((message) => (
             <MessageContainer key={message.id} isUser={message.role === 'user'}>
               {message.role === 'user' ? (
                 <UserMessage content={message.content} />
@@ -206,12 +225,12 @@ const ChatPage: React.FC = () => {
               selectedProvider={selectedProvider}
               onProviderChange={(provider: AIProvider) => {
                 // 如果已经有聊天内容，不允许变更模型
-                if (currentMessages.length > 0) {
+                if (messages.length > 0) {
                   return
                 }
                 setSelectedProvider(provider)
               }}
-              messagesLength={currentMessages.length}
+              messagesLength={messages.length}
             />
 
             <IconButton

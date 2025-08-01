@@ -24,8 +24,9 @@ export interface ApiResponse<T> {
 // 请求拦截器
 export const request = async <T>(
   endpoint: string,
-  options: RequestInit = {}
-): Promise<ApiResponse<T>> => {
+  options: RequestInit = {},
+  returnResponse: boolean = false
+): Promise<ApiResponse<T> | Response> => {
   const url = `${API_BASE_URL}${endpoint}`
 
   const defaultOptions: RequestInit = {
@@ -50,5 +51,11 @@ export const request = async <T>(
     await window.api.clearAuthToken()
     window.location.href = '/login'
   }
+
+  // 如果需要返回原始Response对象（用于流式请求）
+  if (returnResponse) {
+    return response
+  }
+
   return await response.json()
 }
