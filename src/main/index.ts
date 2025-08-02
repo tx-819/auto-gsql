@@ -1,7 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import * as keytar from 'keytar'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
@@ -52,58 +51,6 @@ app.whenReady().then(() => {
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
-  })
-
-  // IPC handlers for settings
-  ipcMain.handle('get-ai-config', async (_, provider) => {
-    try {
-      const config = await keytar.getPassword('auto-gsql', `ai-config-${provider}`)
-      return config ? JSON.parse(config) : null
-    } catch (error) {
-      console.error('Failed to get ai config:', error)
-      return null
-    }
-  })
-
-  ipcMain.handle('save-ai-config', async (_, provider, config) => {
-    try {
-      await keytar.setPassword('auto-gsql', `ai-config-${provider}`, JSON.stringify(config))
-      return true
-    } catch (error) {
-      console.error('Failed to save ai config:', error)
-      return false
-    }
-  })
-
-  // Token管理
-  ipcMain.handle('get-auth-token', async () => {
-    try {
-      const token = await keytar.getPassword('auto-gsql', 'auth-token')
-      return token
-    } catch (error) {
-      console.error('Failed to get auth token:', error)
-      return null
-    }
-  })
-
-  ipcMain.handle('save-auth-token', async (_, token) => {
-    try {
-      await keytar.setPassword('auto-gsql', 'auth-token', token)
-      return true
-    } catch (error) {
-      console.error('Failed to save auth token:', error)
-      return false
-    }
-  })
-
-  ipcMain.handle('clear-auth-token', async () => {
-    try {
-      await keytar.deletePassword('auto-gsql', 'auth-token')
-      return true
-    } catch (error) {
-      console.error('Failed to clear auth token:', error)
-      return false
-    }
   })
 
   // IPC test

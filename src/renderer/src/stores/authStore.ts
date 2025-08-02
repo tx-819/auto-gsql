@@ -30,7 +30,7 @@ interface AuthState {
 // 创建认证store
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // 初始状态
       isAuthenticated: false,
       isLoading: false,
@@ -47,13 +47,8 @@ export const useAuthStore = create<AuthState>()(
 
           if (response.code === 200) {
             const { access_token } = response.data
-
-            // 保存token
-            await window.api.saveAuthToken(access_token)
-
             // 获取用户信息
             const user = await getUserInfo()
-
             set({
               isAuthenticated: true,
               user,
@@ -119,10 +114,6 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.warn('Logout request failed:', error)
         }
-
-        // 清除本地token
-        await window.api.clearAuthToken()
-
         set({
           isAuthenticated: false,
           user: null,
@@ -134,7 +125,7 @@ export const useAuthStore = create<AuthState>()(
 
       // 检查认证状态
       checkAuth: async () => {
-        const token = await window.api.getAuthToken()
+        const token = get().token
 
         if (!token) {
           set({
@@ -158,7 +149,6 @@ export const useAuthStore = create<AuthState>()(
             return true
           } else {
             // Token无效，清除状态
-            await window.api.clearAuthToken()
             set({
               isAuthenticated: false,
               user: null,
@@ -169,7 +159,6 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           console.error('Auth check failed:', error)
           // 验证失败，清除状态
-          await window.api.clearAuthToken()
           set({
             isAuthenticated: false,
             user: null,

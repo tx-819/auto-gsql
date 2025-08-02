@@ -11,9 +11,9 @@ import {
   ModelSelector
 } from './_components'
 import { useChatStore } from '../../stores'
+import { type AIProvider } from '../../utils/modelConfig'
 
 type ChatMode = 'chat' | 'agent'
-type AIProvider = 'openai' | 'deepseek'
 
 interface DatabaseConnection {
   id: string

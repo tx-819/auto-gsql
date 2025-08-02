@@ -36,7 +36,8 @@ const drawerWidth = 280
 const Layout: React.FC = () => {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const { topics, loadTopics, deleteMessages, currentTopicId, setCurrentTopic } = useChatStore()
+  const { topics, loadTopics, deleteMessages, currentTopicId, setCurrentTopic, deleteTopic } =
+    useChatStore()
   const { user } = useAuthStore()
 
   useEffect(() => {
@@ -147,7 +148,15 @@ const Layout: React.FC = () => {
                     display: 'flex'
                   }}
                 >
-                  <IconButton size="small" sx={{ color: 'text.secondary' }}>
+                  <IconButton
+                    size="small"
+                    sx={{ color: 'text.secondary' }}
+                    onClick={(event) => {
+                      // 阻止事件冒泡
+                      event.stopPropagation()
+                      deleteTopic(topic.id)
+                    }}
+                  >
                     <DeleteIcon sx={{ fontSize: 16 }} />
                   </IconButton>
                 </Box>

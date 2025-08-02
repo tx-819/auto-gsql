@@ -1,7 +1,11 @@
 import React, { useState } from 'react'
 import { Box, Menu, MenuItem, Chip } from '@mui/material'
-
-type AIProvider = 'openai' | 'deepseek'
+import { useChatStore } from '../../../stores'
+import {
+  getModelDisplayName,
+  getProviderDisplayName,
+  type AIProvider
+} from '../../../utils/modelConfig'
 
 interface ModelSelectorProps {
   selectedProvider: AIProvider
@@ -14,6 +18,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   onProviderChange,
   messagesLength
 }) => {
+  const { aiConfigs } = useChatStore()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
@@ -30,8 +35,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     handleClose()
   }
 
-  const getProviderDisplayName = (provider: AIProvider): string => {
-    return provider === 'openai' ? 'OpenAI' : 'DeepSeek'
+  const getCurrentModelDisplayName = (): string => {
+    const currentConfig = aiConfigs[selectedProvider]
+    const modelName = currentConfig?.model || ''
+    return getModelDisplayName(modelName) || getProviderDisplayName(selectedProvider)
   }
 
   return (
@@ -42,7 +49,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
       }}
     >
       <Chip
-        label={getProviderDisplayName(selectedProvider)}
+        label={getCurrentModelDisplayName()}
         size="small"
         onClick={handleClick}
         disabled={messagesLength > 0}

@@ -11,8 +11,7 @@ import {
   type StreamChunk,
   type StreamResult
 } from '../services/chat'
-
-type AIProvider = 'openai' | 'deepseek'
+import { type AIProvider } from '../utils/modelConfig'
 
 // AI配置接口
 export type AIConfigs = Record<
@@ -49,7 +48,7 @@ interface ChatState {
   archiveTopic: (topicId: number) => Promise<boolean>
   deleteTopic: (topicId: number) => Promise<boolean>
   setCurrentTopic: (topicId: number | null) => void
-  setAIConfig: (provider: AIProvider, config: AIConfigs[AIProvider]) => Promise<boolean>
+  setAIConfig: (provider: AIProvider, config: AIConfigs[AIProvider]) => void
   getAIConfig: (provider: AIProvider) => Promise<AIConfigs[AIProvider]>
   clearError: () => void
   setLoading: (loading: boolean) => void
@@ -270,12 +269,9 @@ export const useChatStore = create<ChatState>()(
 
           if (response.code === 200) {
             set((state) => {
-              const newMessages = { ...state.messages }
-              delete newMessages[topicId]
-
               return {
                 topics: state.topics.filter((topic) => topic.id !== topicId),
-                messages: newMessages,
+                messages: state.currentTopicId === topicId ? [] : state.messages,
                 currentTopicId: state.currentTopicId === topicId ? null : state.currentTopicId,
                 isLoading: false
               }
@@ -302,25 +298,16 @@ export const useChatStore = create<ChatState>()(
 
       // 设置AI配置
       setAIConfig: async (provider: AIProvider, config: AIConfigs[AIProvider]) => {
-        const success = await window.api.saveAIConfig(provider, config)
         set((state) => ({
           aiConfigs: {
             ...state.aiConfigs,
             [provider]: config
           }
         }))
-        return success
       },
       // 获取AI配置
       getAIConfig: async (provider: AIProvider) => {
-        const config = await window.api.getAIConfig(provider)
-        set((state) => ({
-          aiConfigs: {
-            ...state.aiConfigs,
-            [provider]: config
-          }
-        }))
-        return config
+        return get().aiConfigs[provider]
       },
       // 清除错误
       clearError: () => {
@@ -335,7 +322,8 @@ export const useChatStore = create<ChatState>()(
     {
       name: 'chat-storage',
       partialize: (state) => ({
-        currentTopicId: state.currentTopicId
+        currentTopicId: state.currentTopicId,
+        aiConfigs: state.aiConfigs
       })
     }
   )

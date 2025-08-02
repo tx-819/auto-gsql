@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Typography,
@@ -11,13 +11,18 @@ import {
   Snackbar,
   Switch,
   FormControlLabel,
-  Stack
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material'
 import { Save as SaveIcon, Key as KeyIcon } from '@mui/icons-material'
 import { useChatStore } from '../../stores'
+import { AVAILABLE_MODELS } from '../../utils/modelConfig'
 
 const Settings: React.FC = () => {
-  const { aiConfigs, setAIConfig, getAIConfig } = useChatStore()
+  const { aiConfigs, setAIConfig } = useChatStore()
   const [showApiKey, setShowApiKey] = useState(false)
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -25,22 +30,13 @@ const Settings: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'warning' | 'info'
   })
 
-  useEffect(() => {
-    // 从keytar加载设置
-    const loadSettingsData = async (): Promise<void> => {
-      await getAIConfig('openai')
-      await getAIConfig('deepseek')
-    }
-    loadSettingsData()
-  }, [getAIConfig, setAIConfig])
-
-  const handleSave = async (): Promise<void> => {
-    const success = await setAIConfig('openai', aiConfigs.openai!)
-    const success2 = await setAIConfig('deepseek', aiConfigs.deepseek!)
+  const handleSave = (): void => {
+    setAIConfig('openai', aiConfigs.openai!)
+    setAIConfig('deepseek', aiConfigs.deepseek!)
     setSnackbar({
       open: true,
-      message: success && success2 ? '设置已保存' : '保存失败',
-      severity: success && success2 ? 'success' : 'error'
+      message: '设置已保存',
+      severity: 'success'
     })
   }
 
@@ -80,6 +76,22 @@ const Settings: React.FC = () => {
                 placeholder="https://api.openai.com/v1"
                 helperText="OpenAI API的基础URL，如果使用代理请修改"
               />
+              <FormControl fullWidth>
+                <InputLabel>选择模型</InputLabel>
+                <Select
+                  value={aiConfigs.openai?.model || 'gpt-3.5-turbo'}
+                  label="选择模型"
+                  onChange={(e) =>
+                    setAIConfig('openai', { ...aiConfigs.openai!, model: e.target.value })
+                  }
+                >
+                  {AVAILABLE_MODELS.openai.map((model) => (
+                    <MenuItem key={model.value} value={model.value}>
+                      {model.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Stack>
           </CardContent>
         </Card>
@@ -108,6 +120,22 @@ const Settings: React.FC = () => {
                 placeholder="https://api.deepseek.com/v1"
                 helperText="DeepSeek API的基础URL，如果使用代理请修改"
               />
+              <FormControl fullWidth>
+                <InputLabel>选择模型</InputLabel>
+                <Select
+                  value={aiConfigs.deepseek?.model || 'deepseek-chat'}
+                  label="选择模型"
+                  onChange={(e) =>
+                    setAIConfig('deepseek', { ...aiConfigs.deepseek!, model: e.target.value })
+                  }
+                >
+                  {AVAILABLE_MODELS.deepseek.map((model) => (
+                    <MenuItem key={model.value} value={model.value}>
+                      {model.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Stack>
           </CardContent>
         </Card>

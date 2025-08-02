@@ -1,15 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { AIConfig, AIProvider } from './index.d'
 
 // Custom APIs for renderer
 const api = {
-  getAIConfig: (provider: AIProvider) => ipcRenderer.invoke('get-ai-config', provider),
-  saveAIConfig: (provider: AIProvider, config: AIConfig) =>
-    ipcRenderer.invoke('save-ai-config', provider, config),
-  getAuthToken: () => ipcRenderer.invoke('get-auth-token'),
-  saveAuthToken: (token: string) => ipcRenderer.invoke('save-auth-token', token),
-  clearAuthToken: () => ipcRenderer.invoke('clear-auth-token'),
   openExternalLink: (url: string) => ipcRenderer.invoke('open-external-link', url)
 }
 
