@@ -20,28 +20,13 @@ import {
   Email as EmailIcon
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router'
-import { registerUser } from '../../services/auth'
+import { useAuthStore } from '../../stores/authStore'
 
 interface RegisterForm {
   username: string
   email: string
   password: string
   confirmPassword: string
-}
-
-// 注册
-const register = async (credentials: {
-  username: string
-  email: string
-  password: string
-}): Promise<boolean> => {
-  try {
-    await registerUser(credentials)
-    return true
-  } catch (error) {
-    console.error('Registration failed:', error)
-    return false
-  }
 }
 
 const Register: React.FC = () => {
@@ -54,75 +39,28 @@ const Register: React.FC = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { register, isLoading, error, clearError } = useAuthStore()
 
   const handleInputChange =
     (field: keyof RegisterForm) =>
     (e: React.ChangeEvent<HTMLInputElement>): void => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
-      if (error) setError('')
+      if (error) clearError()
     }
-
-  const validateForm = (): string | null => {
-    if (!form.username.trim()) {
-      return '请输入用户名'
-    }
-    if (form.username.length < 3) {
-      return '用户名至少需要3个字符'
-    }
-    if (!form.email.trim()) {
-      return '请输入邮箱地址'
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      return '请输入有效的邮箱地址'
-    }
-    if (!form.password) {
-      return '请输入密码'
-    }
-    if (form.password.length < 6) {
-      return '密码至少需要6个字符'
-    }
-    if (form.password !== form.confirmPassword) {
-      return '两次输入的密码不一致'
-    }
-    return null
-  }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
 
-    const validationError = validateForm()
-    if (validationError) {
-      setError(validationError)
-      return
-    }
-
-    setLoading(true)
-    setError('')
-
-    try {
-      // 使用注册API
-      const success = await register({
-        username: form.username,
-        email: form.email,
-        password: form.password
+    // 使用注册API
+    const success = await register(form.username, form.password, form.email, form.confirmPassword)
+    if (success) {
+      // 注册成功，跳转到登录页面
+      navigate('/login', {
+        state: {
+          message: '注册成功！请使用新账户登录。',
+          username: form.username
+        }
       })
-      if (success) {
-        // 注册成功，跳转到登录页面
-        navigate('/login', {
-          state: {
-            message: '注册成功！请使用新账户登录。',
-            username: form.username
-          }
-        })
-      } else {
-        setError('用户名或邮箱已存在')
-      }
-    } catch {
-      setError('注册失败，请重试')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -186,7 +124,7 @@ const Register: React.FC = () => {
                   </InputAdornment>
                 )
               }}
-              disabled={loading}
+              disabled={isLoading}
               helperText="至少3个字符"
             />
 
@@ -205,7 +143,7 @@ const Register: React.FC = () => {
                   </InputAdornment>
                 )
               }}
-              disabled={loading}
+              disabled={isLoading}
             />
 
             <TextField
@@ -224,13 +162,13 @@ const Register: React.FC = () => {
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={handleTogglePassword} edge="end" disabled={loading}>
+                    <IconButton onClick={handleTogglePassword} edge="end" disabled={isLoading}>
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 )
               }}
-              disabled={loading}
+              disabled={isLoading}
               helperText="至少6个字符"
             />
 
@@ -250,13 +188,17 @@ const Register: React.FC = () => {
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={handleToggleConfirmPassword} edge="end" disabled={loading}>
+                    <IconButton
+                      onClick={handleToggleConfirmPassword}
+                      edge="end"
+                      disabled={isLoading}
+                    >
                       {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 )
               }}
-              disabled={loading}
+              disabled={isLoading}
             />
 
             {error && (
@@ -270,7 +212,7 @@ const Register: React.FC = () => {
               fullWidth
               variant="contained"
               size="large"
-              disabled={loading}
+              disabled={isLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -280,7 +222,7 @@ const Register: React.FC = () => {
                 fontSize: '1.1rem'
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : '注册'}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : '注册'}
             </Button>
           </form>
 

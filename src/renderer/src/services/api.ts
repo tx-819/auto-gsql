@@ -1,3 +1,5 @@
+import { useAuthStore } from '../stores/authStore'
+
 const API_CONFIG = {
   // API基础URL
   BASE_URL: process.env.NODE_ENV === 'production' ? 'https://your-production-api.com' : '/api', // 使用Vite代理
@@ -36,9 +38,8 @@ export const request = async <T>(
     },
     ...options
   }
-
   // 添加认证Token（如果存在）
-  const token = await window.api.getAuthToken()
+  const token = useAuthStore.getState().token
   if (token) {
     defaultOptions.headers = {
       ...defaultOptions.headers,
@@ -48,7 +49,7 @@ export const request = async <T>(
   const response = await fetch(url, defaultOptions)
   // 如果响应状态码为401，则清除Token并重定向到登录页面
   if (response.status === 401) {
-    await window.api.clearAuthToken()
+    useAuthStore.getState().clearAuth()
     window.location.href = '/login'
   }
 

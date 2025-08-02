@@ -18,24 +18,11 @@ import {
   Lock as LockIcon
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router'
-import { loginUser } from '../../services/auth'
+import { useAuthStore } from '../../stores/authStore'
 
 interface LoginForm {
   username: string
   password: string
-}
-
-const login = async (credentials: { username: string; password: string }): Promise<boolean> => {
-  try {
-    const response = await loginUser(credentials)
-
-    // 保存Token到keytar
-    const success = await window.api.saveAuthToken(response.data.access_token)
-    return success
-  } catch (error) {
-    console.error('Login failed:', error)
-    return false
-  }
 }
 
 const Login: React.FC = () => {
@@ -46,8 +33,7 @@ const Login: React.FC = () => {
     password: ''
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { login, isLoading, error, clearError } = useAuthStore()
   const [successMessage, setSuccessMessage] = useState('')
 
   // 检查是否有注册成功消息
@@ -65,33 +51,16 @@ const Login: React.FC = () => {
     (field: keyof LoginForm) =>
     (e: React.ChangeEvent<HTMLInputElement>): void => {
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
-      if (error) setError('')
+      if (error) clearError()
     }
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
-    if (!form.username.trim() || !form.password.trim()) {
-      setError('请输入用户名和密码')
-      return
-    }
-    setLoading(true)
-    setError('')
-    try {
-      // 使用登录API
-      const success = await login({
-        username: form.username,
-        password: form.password
-      })
-      if (success) {
-        // 登录成功，跳转到主页面
-        navigate('/')
-      } else {
-        setError('用户名或密码错误')
-      }
-    } catch {
-      setError('登录失败，请重试')
-    } finally {
-      setLoading(false)
+    // 使用登录API
+    const success = await login(form.username, form.password)
+    if (success) {
+      // 登录成功，跳转到主页面
+      navigate('/')
     }
   }
 
@@ -157,7 +126,7 @@ const Login: React.FC = () => {
                   </InputAdornment>
                 )
               }}
-              disabled={loading}
+              disabled={isLoading}
             />
 
             <TextField
@@ -176,13 +145,13 @@ const Login: React.FC = () => {
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={handleTogglePassword} edge="end" disabled={loading}>
+                    <IconButton onClick={handleTogglePassword} edge="end" disabled={isLoading}>
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 )
               }}
-              disabled={loading}
+              disabled={isLoading}
             />
 
             {error && (
@@ -196,7 +165,7 @@ const Login: React.FC = () => {
               fullWidth
               variant="contained"
               size="large"
-              disabled={loading}
+              disabled={isLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -206,7 +175,7 @@ const Login: React.FC = () => {
                 fontSize: '1.1rem'
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : '登录'}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : '登录'}
             </Button>
           </form>
 

@@ -20,9 +20,15 @@ interface AuthState {
 
   // 动作
   login: (username: string, password: string) => Promise<boolean>
-  register: (username: string, password: string, email?: string) => Promise<boolean>
+  register: (
+    username: string,
+    password: string,
+    email?: string,
+    confirmPassword?: string
+  ) => Promise<boolean>
   logout: () => Promise<void>
   checkAuth: () => Promise<boolean>
+  clearAuth: () => void
   clearError: () => void
   setLoading: (loading: boolean) => void
 }
@@ -41,7 +47,13 @@ export const useAuthStore = create<AuthState>()(
       // 登录
       login: async (username: string, password: string) => {
         set({ isLoading: true, error: null })
-
+        if (!username.trim() || !password.trim()) {
+          set({
+            isLoading: false,
+            error: '请输入用户名和密码'
+          })
+          return false
+        }
         try {
           const response = await loginUser({ username, password })
 
@@ -76,9 +88,62 @@ export const useAuthStore = create<AuthState>()(
       },
 
       // 注册
-      register: async (username: string, password: string, email?: string) => {
+      register: async (
+        username: string,
+        password: string,
+        email?: string,
+        confirmPassword?: string
+      ) => {
         set({ isLoading: true, error: null })
-
+        if (!username.trim()) {
+          set({
+            isLoading: false,
+            error: '请输入用户名'
+          })
+          return false
+        }
+        if (username.length < 3) {
+          set({
+            isLoading: false,
+            error: '用户名至少需要3个字符'
+          })
+          return false
+        }
+        if (!email?.trim()) {
+          set({
+            isLoading: false,
+            error: '请输入邮箱地址'
+          })
+          return false
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email!)) {
+          set({
+            isLoading: false,
+            error: '请输入有效的邮箱地址'
+          })
+          return false
+        }
+        if (!password) {
+          set({
+            isLoading: false,
+            error: '请输入密码'
+          })
+          return false
+        }
+        if (password.length < 6) {
+          set({
+            isLoading: false,
+            error: '密码至少需要6个字符'
+          })
+          return false
+        }
+        if (password !== confirmPassword) {
+          set({
+            isLoading: false,
+            error: '两次输入的密码不一致'
+          })
+          return false
+        }
         try {
           const response = await registerUser({ username, password, email })
 
@@ -166,6 +231,11 @@ export const useAuthStore = create<AuthState>()(
           })
           return false
         }
+      },
+
+      // 清除认证状态
+      clearAuth: () => {
+        set({ isAuthenticated: false, user: null, token: null })
       },
 
       // 清除错误
