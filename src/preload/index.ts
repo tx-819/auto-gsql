@@ -1,9 +1,32 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
+interface DbConnection {
+  id: number
+  name: string
+  dbType: string
+  host: string
+  port: string
+  databaseName: string
+  username: string
+  password: string
+}
+
 // Custom APIs for renderer
 const api = {
-  openExternalLink: (url: string) => ipcRenderer.invoke('open-external-link', url)
+  openExternalLink: (url: string) => ipcRenderer.invoke('open-external-link', url),
+  database: {
+    testConnection: (config: DbConnection) =>
+      ipcRenderer.invoke('database:test-connection', config),
+    createConnection: (config: DbConnection) =>
+      ipcRenderer.invoke('database:create-connection', config),
+    closeConnection: (connectionName: string) =>
+      ipcRenderer.invoke('database:close-connection', connectionName),
+    executeQuery: (connectionName: string, query: string) =>
+      ipcRenderer.invoke('database:execute-query', connectionName, query),
+    getConnectionStatus: (connectionName: string) =>
+      ipcRenderer.invoke('database:get-connection-status', connectionName)
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

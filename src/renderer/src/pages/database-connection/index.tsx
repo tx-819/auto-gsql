@@ -14,7 +14,8 @@ import {
   IconButton,
   InputAdornment,
   FormControlLabel,
-  Switch
+  Switch,
+  CircularProgress
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -23,33 +24,33 @@ import {
   Save as SaveIcon,
   Wifi as TestConnectionIcon
 } from '@mui/icons-material'
-import { useNavigate } from 'react-router'
-
-interface DatabaseConfig {
-  name: string
-  type: string
-  host: string
-  port: string
-  database: string
-  username: string
-  password: string
-  useSSL: boolean
-  timeout: string
-}
+import { useNavigate, useLocation } from 'react-router'
+import {
+  testConnection,
+  createConnection,
+  DbConnection,
+  updateConnection,
+  saveConnection
+} from '../../services/database'
 
 const DatabaseConnection: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
-  const [config, setConfig] = useState<DatabaseConfig>({
-    name: '',
-    type: 'mysql',
-    host: 'localhost',
-    port: '3306',
-    database: '',
-    username: '',
-    password: '',
-    useSSL: false,
-    timeout: '30'
+
+  // 检查是否为编辑模式
+  const isEditMode = location.state?.editMode || false
+  const editConnection = location.state?.connection || null
+
+  const [config, setConfig] = useState<DbConnection>({
+    id: editConnection?.id || 0,
+    name: editConnection?.name || '',
+    dbType: editConnection?.dbType || 'mysql',
+    host: editConnection?.host || 'localhost',
+    port: editConnection?.port || '3306',
+    databaseName: editConnection?.databaseName || '',
+    username: editConnection?.username || '',
+    password: editConnection?.password || ''
   })
 
   const databaseTypes = [
@@ -68,33 +69,82 @@ const DatabaseConnection: React.FC = () => {
     sqlite: ''
   }
 
-  const handleConfigChange = (field: keyof DatabaseConfig, value: string | boolean): void => {
+  const handleConfigChange = (field: keyof DbConnection, value: string | boolean): void => {
     setConfig((prev) => ({
       ...prev,
       [field]: value
     }))
 
     // 当数据库类型改变时，自动设置默认端口
-    if (field === 'type' && typeof value === 'string') {
+    if (field === 'dbType' && typeof value === 'string') {
       setConfig((prev) => ({
         ...prev,
-        type: value,
+        dbType: value,
         port: defaultPorts[value as keyof typeof defaultPorts] || ''
       }))
     }
   }
 
-  const handleTestConnection = (): void => {
-    // TODO: 实现测试连接逻辑
-    console.log('Testing connection with config:', config)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [isTesting, setIsTesting] = useState(false)
+
+  const handleTestConnection = async (): Promise<void> => {
+    setIsTesting(true)
+    setTestResult(null)
+
+    try {
+      const result = await testConnection(config)
+      setTestResult(result)
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: error instanceof Error ? error.message : '测试连接失败'
+      })
+    } finally {
+      setIsTesting(false)
+    }
   }
 
-  const handleSaveConnection = (): void => {
-    // TODO: 实现保存连接逻辑
-    console.log('Saving connection config:', config)
-    navigate('/database-model-detection', {
-      state: { connectionInfo: config }
-    })
+  const handleSaveConnection = async (): Promise<void> => {
+    try {
+      const result = await createConnection(config)
+      if (result.success) {
+        if (isEditMode) {
+          // 编辑模式保存后返回连接列表页
+          updateConnection(config).then((response) => {
+            if (response.code === 200) {
+              navigate('/database-connections')
+            } else {
+              setTestResult({
+                success: false,
+                message: response.message
+              })
+            }
+          })
+        } else {
+          // 新建模式保存后跳转到模型检测页
+          saveConnection(config).then((response) => {
+            if (response.code === 200) {
+              navigate('/database-model-detection', {
+                state: { connectionInfo: config }
+              })
+            } else {
+              setTestResult({
+                success: false,
+                message: response.message
+              })
+            }
+          })
+        }
+      } else {
+        setTestResult(result)
+      }
+    } catch (error) {
+      setTestResult({
+        success: false,
+        message: error instanceof Error ? error.message : '保存连接失败'
+      })
+    }
   }
 
   const handleBack = (): void => {
@@ -121,7 +171,7 @@ const DatabaseConnection: React.FC = () => {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h5" component="h1">
-          新建数据库连接
+          {isEditMode ? '编辑数据库连接' : '新建数据库连接'}
         </Typography>
       </Box>
 
@@ -146,9 +196,9 @@ const DatabaseConnection: React.FC = () => {
             <FormControl sx={{ flex: 1 }}>
               <InputLabel>数据库类型</InputLabel>
               <Select
-                value={config.type}
+                value={config.dbType}
                 label="数据库类型"
-                onChange={(e) => handleConfigChange('type', e.target.value)}
+                onChange={(e) => handleConfigChange('dbType', e.target.value)}
               >
                 {databaseTypes.map((type) => (
                   <MenuItem key={type.value} value={type.value}>
@@ -174,17 +224,17 @@ const DatabaseConnection: React.FC = () => {
               label="端口"
               value={config.port}
               onChange={(e) => handleConfigChange('port', e.target.value)}
-              placeholder={defaultPorts[config.type as keyof typeof defaultPorts]}
-              disabled={config.type === 'sqlite'}
+              placeholder={defaultPorts[config.dbType as keyof typeof defaultPorts]}
+              disabled={config.dbType === 'sqlite'}
             />
 
             <TextField
               sx={{ flex: 1 }}
               label="数据库名"
-              value={config.database}
-              onChange={(e) => handleConfigChange('database', e.target.value)}
+              value={config.databaseName}
+              onChange={(e) => handleConfigChange('databaseName', e.target.value)}
               placeholder="数据库名称"
-              disabled={config.type === 'sqlite'}
+              disabled={config.dbType === 'sqlite'}
             />
           </Box>
 
@@ -196,7 +246,7 @@ const DatabaseConnection: React.FC = () => {
               value={config.username}
               onChange={(e) => handleConfigChange('username', e.target.value)}
               placeholder="用户名"
-              disabled={config.type === 'sqlite'}
+              disabled={config.dbType === 'sqlite'}
             />
 
             <TextField
@@ -206,7 +256,7 @@ const DatabaseConnection: React.FC = () => {
               value={config.password}
               onChange={(e) => handleConfigChange('password', e.target.value)}
               placeholder="密码"
-              disabled={config.type === 'sqlite'}
+              disabled={config.dbType === 'sqlite'}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -233,41 +283,36 @@ const DatabaseConnection: React.FC = () => {
             <FormControlLabel
               control={
                 <Switch
-                  checked={config.useSSL}
-                  onChange={(e) => handleConfigChange('useSSL', e.target.checked)}
-                  disabled={config.type === 'sqlite'}
+                  checked={config.dbType === 'sqlite'}
+                  onChange={(e) => handleConfigChange('dbType', e.target.checked)}
+                  disabled={config.dbType === 'sqlite'}
                 />
               }
               label="使用SSL连接"
             />
-
-            <TextField
-              sx={{ flex: 1, maxWidth: 200 }}
-              label="连接超时（秒）"
-              type="number"
-              value={config.timeout}
-              onChange={(e) => handleConfigChange('timeout', e.target.value)}
-              slotProps={{
-                input: {
-                  inputProps: {
-                    min: 1,
-                    max: 300
-                  }
-                }
-              }}
-            />
           </Box>
         </Box>
+
+        {/* 测试结果 */}
+        {testResult && (
+          <Alert
+            severity={testResult.success ? 'success' : 'error'}
+            sx={{ mt: 3 }}
+            onClose={() => setTestResult(null)}
+          >
+            {testResult.message}
+          </Alert>
+        )}
 
         {/* 操作按钮 */}
         <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
           <Button
             variant="outlined"
-            startIcon={<TestConnectionIcon />}
+            startIcon={isTesting ? <CircularProgress size={20} /> : <TestConnectionIcon />}
             onClick={handleTestConnection}
-            disabled={!config.name || !config.host}
+            disabled={!config.name || !config.host || isTesting}
           >
-            测试连接
+            {isTesting ? '测试中...' : '测试连接'}
           </Button>
           <Button
             variant="contained"
@@ -275,7 +320,7 @@ const DatabaseConnection: React.FC = () => {
             onClick={handleSaveConnection}
             disabled={!config.name || !config.host}
           >
-            保存连接
+            {isEditMode ? '更新连接' : '保存连接'}
           </Button>
         </Box>
 

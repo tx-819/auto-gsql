@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router'
 import Chat from './pages/chat'
 import DatabaseConnection from './pages/database-connection'
+import DatabaseConnections from './pages/database-connections'
 import DatabaseModelDetection from './pages/database-model-detection'
 import Settings from './pages/settings'
 import Login from './pages/login'
@@ -30,6 +31,7 @@ root.render(
         }
       >
         <Route index element={<Chat />} />
+        <Route path="database-connections" element={<DatabaseConnections />} />
         <Route path="database-connection" element={<DatabaseConnection />} />
         <Route path="database-model-detection" element={<DatabaseModelDetection />} />
         <Route path="settings" element={<Settings />} />

@@ -82,9 +82,9 @@ const Layout: React.FC = () => {
           sx={{
             borderRadius: 2
           }}
-          onClick={() => navigate('/database-connection')}
+          onClick={() => navigate('/database-connections')}
         >
-          新建数据库连接
+          连接管理
         </ColorButton>
       </Box>
 

@@ -29,6 +29,7 @@
     "@mui/material": "^7.2.0",
     "electron-updater": "^6.3.9",
     "keytar": "^7.9.0",
+    "mysql2": "^3.14.3",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "zustand": "^5.0.7"
@@ -37,6 +38,7 @@
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/mysql": "^2.15.27",
     "@types/node": "^22.16.5",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

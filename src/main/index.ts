@@ -2,6 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { registerDatabaseHandlers } from './database'
 
 function createWindow(): void {
   // Create the browser window.
@@ -55,6 +56,9 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
+  // 注册数据库处理器
+  registerDatabaseHandlers()
 
   // 打开外部链接
   ipcMain.handle('open-external-link', async (_, url) => {

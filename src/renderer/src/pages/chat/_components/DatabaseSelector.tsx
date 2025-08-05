@@ -10,7 +10,11 @@ import {
   Chip,
   Button
 } from '@mui/material'
-import { Storage as DatabaseIcon, Settings as SettingsIcon } from '@mui/icons-material'
+import {
+  Storage as DatabaseIcon,
+  Settings as SettingsIcon,
+  ManageAccounts as ManageIcon
+} from '@mui/icons-material'
 import { useNavigate } from 'react-router'
 
 interface DatabaseConnection {
@@ -164,6 +168,22 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
               sx={{ height: 28, fontSize: '0.75rem' }}
             />
           )}
+
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<ManageIcon />}
+            onClick={() => navigate('/database-connections')}
+            sx={{
+              height: 28,
+              fontSize: '0.75rem',
+              px: 1.5,
+              minWidth: 'auto',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            管理连接
+          </Button>
 
           {selectedDatabase && (
             <Button
