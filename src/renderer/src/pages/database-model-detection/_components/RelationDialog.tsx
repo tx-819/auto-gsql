@@ -53,7 +53,7 @@ const RelationDialog: React.FC<RelationDialogProps> = ({
         sourceColumnName: '',
         targetTableName: '',
         targetColumnName: '',
-        relationType: RelationType.ONE_TO_MANY
+        relationType: RelationType.MANY_TO_ONE
       })
       setDescription('')
     }
@@ -182,7 +182,6 @@ const RelationDialog: React.FC<RelationDialogProps> = ({
               onChange={(e) => handleFormChange('relationType', e.target.value)}
             >
               <MenuItem value="one-to-one">一对一 (1:1)</MenuItem>
-              <MenuItem value="one-to-many">一对多 (1:N)</MenuItem>
               <MenuItem value="many-to-one">多对一 (N:1)</MenuItem>
               <MenuItem value="many-to-many">多对多 (M:N)</MenuItem>
             </Select>

@@ -15,7 +15,12 @@ import {
   InputAdornment,
   FormControlLabel,
   Switch,
-  CircularProgress
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material'
 import {
   ArrowBack as ArrowBackIcon,
@@ -34,6 +39,8 @@ import {
   saveConnection,
   getConnection
 } from '../../services/database'
+import { useChatStore } from '../../stores/chatStore'
+import { AVAILABLE_MODELS, type AIProvider } from '../../utils/modelConfig'
 
 const DatabaseConnection: React.FC = () => {
   const navigate = useNavigate()
@@ -49,6 +56,17 @@ const DatabaseConnection: React.FC = () => {
     username: '',
     password: ''
   })
+
+  // 对话框状态
+  const [openGenerateDialog, setOpenGenerateDialog] = useState(false)
+  const [enableAI, setEnableAI] = useState(false)
+
+  // 模型选择状态
+  const [selectedProvider, setSelectedProvider] = useState<AIProvider>('openai')
+  const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo')
+
+  // 获取ChatStore
+  const { aiConfigs } = useChatStore()
 
   // 检查是否为编辑模式
   const isEditMode = !!location.state?.connectionId
@@ -150,11 +168,27 @@ const DatabaseConnection: React.FC = () => {
   }
 
   const handleGenerateModel = async (): Promise<void> => {
+    // 打开生成模型对话框
+    setOpenGenerateDialog(true)
+  }
+
+  const handleConfirmGenerateModel = async (): Promise<void> => {
+    setOpenGenerateDialog(false)
+
     if (!isEditMode) {
       const result = await saveConnection(config)
       if (result.code === 200) {
         navigate('/database-model-detection', {
-          state: { connectionInfo: result.data }
+          state: {
+            connectionInfo: result.data,
+            aiConfig: enableAI
+              ? {
+                  apiKey: aiConfigs[selectedProvider]?.apiKey,
+                  baseURL: aiConfigs[selectedProvider]?.baseURL,
+                  model: selectedModel
+                }
+              : null
+          }
         })
       } else {
         setTestResult({
@@ -166,10 +200,23 @@ const DatabaseConnection: React.FC = () => {
       const result = await updateConnection(config)
       if (result.code === 200) {
         navigate('/database-model-detection', {
-          state: { connectionInfo: result.data }
+          state: {
+            connectionInfo: result.data,
+            aiConfig: enableAI
+              ? {
+                  apiKey: aiConfigs[selectedProvider]?.apiKey,
+                  baseURL: aiConfigs[selectedProvider]?.baseURL,
+                  model: selectedModel
+                }
+              : null
+          }
         })
       }
     }
+  }
+
+  const handleCancelGenerateModel = (): void => {
+    setOpenGenerateDialog(false)
   }
 
   const handleBack = (): void => {
@@ -377,6 +424,105 @@ const DatabaseConnection: React.FC = () => {
           </Typography>
         </Alert>
       </Paper>
+
+      {/* 生成模型对话框 */}
+      <Dialog open={openGenerateDialog} onClose={handleCancelGenerateModel} maxWidth="sm" fullWidth>
+        <DialogTitle>生成模型</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>请选择模型生成方式：</DialogContentText>
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={enableAI}
+                onChange={(e) => setEnableAI(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="启用AI生成"
+            sx={{ mb: 2 }}
+          />
+
+          {/* AI模型选择器 */}
+          {enableAI && (
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                AI模型配置：
+              </Typography>
+
+              {/* AI提供商选择 */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>AI提供商</InputLabel>
+                <Select
+                  value={selectedProvider}
+                  label="AI提供商"
+                  onChange={(e) => {
+                    const provider = e.target.value as AIProvider
+                    setSelectedProvider(provider)
+                    // 重置模型为默认值
+                    const defaultModel = AVAILABLE_MODELS[provider][0]?.value || 'gpt-3.5-turbo'
+                    setSelectedModel(defaultModel)
+                  }}
+                >
+                  <MenuItem value="openai">OpenAI</MenuItem>
+                  <MenuItem value="deepseek">DeepSeek</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/* 模型选择 */}
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>模型</InputLabel>
+                <Select
+                  value={selectedModel}
+                  label="模型"
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                >
+                  {AVAILABLE_MODELS[selectedProvider].map((model) => (
+                    <MenuItem key={model.value} value={model.value}>
+                      {model.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* 配置状态提示 */}
+              <Alert
+                severity={aiConfigs[selectedProvider]?.apiKey ? 'success' : 'warning'}
+                sx={{ mt: 1 }}
+              >
+                <Typography variant="body2">
+                  {aiConfigs[selectedProvider]?.apiKey
+                    ? `${selectedProvider === 'openai' ? 'OpenAI' : 'DeepSeek'} 配置已就绪`
+                    : `请先在设置中配置 ${selectedProvider === 'openai' ? 'OpenAI' : 'DeepSeek'} API密钥`}
+                </Typography>
+              </Alert>
+            </Box>
+          )}
+
+          <Alert severity="info" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>备注：</strong>
+              <br />
+              当不启用AI生成时为按规则生成，字段后缀为&ldquo;_id&rdquo;识别为外键。
+              <br />
+              例如 &ldquo;user_id&rdquo; 识别为外键，并且关联user表
+            </Typography>
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelGenerateModel} color="primary">
+            取消
+          </Button>
+          <Button
+            onClick={handleConfirmGenerateModel}
+            color="primary"
+            variant="contained"
+            disabled={enableAI && !aiConfigs[selectedProvider]?.apiKey}
+          >
+            确定生成
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

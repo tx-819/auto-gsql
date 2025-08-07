@@ -41,6 +41,8 @@ const DatabaseModelDetection: React.FC = () => {
     host: 'localhost'
   }
 
+  const aiConfig = location.state?.aiConfig || null
+
   // 检查是否是从聊天页面跳转过来的（跳过AI检测）
   const isFromChat = location.state?.fromChat || false
 
@@ -67,7 +69,8 @@ const DatabaseModelDetection: React.FC = () => {
       const { data } = await generateDatabaseMetadata(
         connectionInfo.id,
         dbTableInfo,
-        uniqueArrayCols
+        uniqueArrayCols,
+        aiConfig
       )
       setTables(data.tables)
       setRelations(data.foreignKeys)

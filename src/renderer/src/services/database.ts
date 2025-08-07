@@ -35,7 +35,7 @@ export interface ConnectionResult {
 
 export enum RelationType {
   ONE_TO_ONE = 'one-to-one',
-  ONE_TO_MANY = 'one-to-many',
+  MANY_TO_ONE = 'many-to-one',
   MANY_TO_MANY = 'many-to-many'
 }
 
@@ -153,13 +153,18 @@ export const deleteConnection = async (
 export const generateDatabaseMetadata = async (
   connectionId: number,
   tables: DbTableInfo[],
-  uniqueCols: string[]
+  uniqueCols: string[],
+  aiConfig: {
+    apiKey: string
+    baseURL?: string
+    model?: string
+  } | null
 ): Promise<ApiResponse<{ tables: DbTableInfo[]; foreignKeys: DbLogicForeignKey[] }>> => {
   const response = await request<{ tables: DbTableInfo[]; foreignKeys: DbLogicForeignKey[] }>(
     `/database/generate-database-metadata`,
     {
       method: 'POST',
-      body: JSON.stringify({ connectionId, tables, uniqueCols })
+      body: JSON.stringify({ connectionId, tables, uniqueCols, aiConfig })
     }
   )
   return response as ApiResponse<{ tables: DbTableInfo[]; foreignKeys: DbLogicForeignKey[] }>
