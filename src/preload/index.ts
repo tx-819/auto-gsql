@@ -25,7 +25,8 @@ const api = {
     executeQuery: (connectionName: string, query: string) =>
       ipcRenderer.invoke('database:execute-query', connectionName, query),
     getConnectionStatus: (connectionName: string) =>
-      ipcRenderer.invoke('database:get-connection-status', connectionName)
+      ipcRenderer.invoke('database:get-connection-status', connectionName),
+    scanDatabase: (config: DbConnection) => ipcRenderer.invoke('database:scan-database', config)
   }
 }
 

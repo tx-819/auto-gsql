@@ -1,15 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-
-interface DbConnection {
-  id: number
-  name: string
-  dbType: string
-  host: string
-  port: string
-  databaseName: string
-  username: string
-  password: string
-}
+import { DbConnection, DbTableInfo } from '../main/database'
 
 interface ConnectionResult {
   success: boolean
@@ -25,6 +15,10 @@ interface Api {
     closeConnection: (connectionName: string) => Promise<ConnectionResult>
     executeQuery: (connectionName: string, query: string) => Promise<unknown>
     getConnectionStatus: (connectionName: string) => Promise<boolean>
+    scanDatabase: (config: DbConnection) => Promise<{
+      dbTableInfo: DbTableInfo[]
+      uniqueArrayCols: string[]
+    }>
   }
 }
 

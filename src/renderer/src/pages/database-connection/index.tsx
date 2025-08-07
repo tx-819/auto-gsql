@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Paper,
@@ -22,7 +22,8 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Save as SaveIcon,
-  Wifi as TestConnectionIcon
+  Wifi as TestConnectionIcon,
+  AutoFixHigh as GenerateModelIcon
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router'
 import {
@@ -30,28 +31,27 @@ import {
   createConnection,
   DbConnection,
   updateConnection,
-  saveConnection
+  saveConnection,
+  getConnection
 } from '../../services/database'
 
 const DatabaseConnection: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [showPassword, setShowPassword] = useState(false)
+  const [config, setConfig] = useState<DbConnection>({
+    id: 0,
+    name: '',
+    dbType: 'mysql',
+    host: 'localhost',
+    port: '3306',
+    databaseName: '',
+    username: '',
+    password: ''
+  })
 
   // 检查是否为编辑模式
-  const isEditMode = location.state?.editMode || false
-  const editConnection = location.state?.connection || null
-
-  const [config, setConfig] = useState<DbConnection>({
-    id: editConnection?.id || 0,
-    name: editConnection?.name || '',
-    dbType: editConnection?.dbType || 'mysql',
-    host: editConnection?.host || 'localhost',
-    port: editConnection?.port || '3306',
-    databaseName: editConnection?.databaseName || '',
-    username: editConnection?.username || '',
-    password: editConnection?.password || ''
-  })
+  const isEditMode = !!location.state?.connectionId
 
   const databaseTypes = [
     { value: 'mysql', label: 'MySQL' },
@@ -113,7 +113,9 @@ const DatabaseConnection: React.FC = () => {
           // 编辑模式保存后返回连接列表页
           updateConnection(config).then((response) => {
             if (response.code === 200) {
-              navigate('/database-connections')
+              navigate('/database-connections', {
+                replace: true
+              })
             } else {
               setTestResult({
                 success: false,
@@ -125,8 +127,8 @@ const DatabaseConnection: React.FC = () => {
           // 新建模式保存后跳转到模型检测页
           saveConnection(config).then((response) => {
             if (response.code === 200) {
-              navigate('/database-model-detection', {
-                state: { connectionInfo: config }
+              navigate('/database-connections', {
+                replace: true
               })
             } else {
               setTestResult({
@@ -147,9 +149,40 @@ const DatabaseConnection: React.FC = () => {
     }
   }
 
-  const handleBack = (): void => {
-    navigate('/')
+  const handleGenerateModel = async (): Promise<void> => {
+    if (!isEditMode) {
+      const result = await saveConnection(config)
+      if (result.code === 200) {
+        navigate('/database-model-detection', {
+          state: { connectionInfo: result.data }
+        })
+      } else {
+        setTestResult({
+          success: false,
+          message: result.message
+        })
+      }
+    } else {
+      const result = await updateConnection(config)
+      if (result.code === 200) {
+        navigate('/database-model-detection', {
+          state: { connectionInfo: result.data }
+        })
+      }
+    }
   }
+
+  const handleBack = (): void => {
+    navigate(-1)
+  }
+
+  useEffect(() => {
+    if (isEditMode && location.state?.connectionId) {
+      getConnection(location.state.connectionId).then((response) => {
+        setConfig(response.data)
+      })
+    }
+  }, [isEditMode, location.state?.connectionId])
 
   return (
     <Box
@@ -321,6 +354,14 @@ const DatabaseConnection: React.FC = () => {
             disabled={!config.name || !config.host}
           >
             {isEditMode ? '更新连接' : '保存连接'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<GenerateModelIcon />}
+            onClick={handleGenerateModel}
+            disabled={!config.name || !config.host}
+          >
+            生成模型
           </Button>
         </Box>
 

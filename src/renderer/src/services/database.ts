@@ -1,5 +1,21 @@
 import { ApiResponse, request } from './api'
 
+export interface DbColumnInfo {
+  columnName: string
+  dataType: string
+  isNullable: boolean
+  isForeignKey?: boolean
+  isPrimary: boolean
+  columnComment: string
+}
+
+export interface DbTableInfo {
+  tableName: string
+  tableComment: string
+  columns: DbColumnInfo[]
+  primaryKey: string
+}
+
 export interface DbConnection {
   id: number
   name: string
@@ -17,6 +33,23 @@ export interface ConnectionResult {
   error?: string
 }
 
+export enum RelationType {
+  ONE_TO_ONE = 'one-to-one',
+  ONE_TO_MANY = 'one-to-many',
+  MANY_TO_MANY = 'many-to-many'
+}
+
+export interface DbLogicForeignKey {
+  id: number
+  sourceTableId: number
+  sourceTableName: string
+  sourceColumnName: string
+  targetTableId: number
+  targetTableName: string
+  targetColumnName: string
+  relationType: RelationType
+}
+
 export async function testConnection(config: DbConnection): Promise<ConnectionResult> {
   try {
     return await window.api.database.testConnection(config)
@@ -25,6 +58,16 @@ export async function testConnection(config: DbConnection): Promise<ConnectionRe
       success: false,
       message: error instanceof Error ? error.message : '测试连接失败'
     }
+  }
+}
+
+export async function scanDatabase(
+  config: DbConnection
+): Promise<{ dbTableInfo: DbTableInfo[]; uniqueArrayCols: string[] }> {
+  try {
+    return await window.api.database.scanDatabase(config)
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : '扫描数据库失败')
   }
 }
 
@@ -45,6 +88,13 @@ export async function createConnection(config: DbConnection): Promise<Connection
       message: error instanceof Error ? error.message : '创建连接失败'
     }
   }
+}
+
+export async function getConnection(connectionId: number): Promise<ApiResponse<DbConnection>> {
+  const response = await request<DbConnection>(`/database/connection/${connectionId}`, {
+    method: 'GET'
+  })
+  return response as ApiResponse<DbConnection>
 }
 
 export async function closeConnection(connectionName: string): Promise<ConnectionResult> {
@@ -98,4 +148,34 @@ export const deleteConnection = async (
     method: 'DELETE'
   })
   return response as ApiResponse<DbConnection>
+}
+
+export const generateDatabaseMetadata = async (
+  connectionId: number,
+  tables: DbTableInfo[],
+  uniqueCols: string[]
+): Promise<ApiResponse<{ tables: DbTableInfo[]; foreignKeys: DbLogicForeignKey[] }>> => {
+  const response = await request<{ tables: DbTableInfo[]; foreignKeys: DbLogicForeignKey[] }>(
+    `/database/generate-database-metadata`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ connectionId, tables, uniqueCols })
+    }
+  )
+  return response as ApiResponse<{ tables: DbTableInfo[]; foreignKeys: DbLogicForeignKey[] }>
+}
+
+export const getTablesWithColumns = async (
+  connectionId: number
+): Promise<ApiResponse<DbTableInfo[]>> => {
+  const params = new URLSearchParams({
+    connectionId: connectionId.toString()
+  })
+  const response = await request<DbTableInfo[]>(
+    `/database/tables-with-columns?${params.toString()}`,
+    {
+      method: 'GET'
+    }
+  )
+  return response as ApiResponse<DbTableInfo[]>
 }

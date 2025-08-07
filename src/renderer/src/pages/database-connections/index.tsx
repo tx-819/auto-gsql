@@ -91,17 +91,7 @@ const DatabaseConnections: React.FC = () => {
   const handleEditConnection = (connection: DbConnection): void => {
     navigate('/database-connection', {
       state: {
-        editMode: true,
-        connection: {
-          id: connection.id,
-          name: connection.name,
-          dbType: connection.dbType,
-          host: connection.host,
-          port: connection.port,
-          databaseName: connection.databaseName,
-          username: connection.username,
-          password: connection.password
-        }
+        connectionId: connection.id
       }
     })
   }
