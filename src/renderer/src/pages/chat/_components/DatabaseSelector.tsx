@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Paper,
@@ -8,27 +8,27 @@ import {
   MenuItem,
   Alert,
   Chip,
-  Button
+  Button,
+  CircularProgress
 } from '@mui/material'
 import {
   Storage as DatabaseIcon,
   Settings as SettingsIcon,
-  ManageAccounts as ManageIcon
+  ManageAccounts as ManageIcon,
+  Power as ConnectIcon
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router'
-
-interface DatabaseConnection {
-  id: string
-  name: string
-  type: string
-  host: string
-  database: string
-}
+import {
+  DbConnection,
+  getConnectionList,
+  getConnectionStatus,
+  createConnection
+} from '../../../services/database'
 
 interface DatabaseSelectorProps {
-  selectedDatabase: DatabaseConnection | null
+  selectedDatabase: DbConnection | null
   messagesLength: number
-  onDatabaseChange: (database: DatabaseConnection) => void
+  onDatabaseChange: (database: DbConnection) => void
 }
 
 const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
@@ -37,23 +37,54 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
   onDatabaseChange
 }) => {
   const navigate = useNavigate()
-  const [databaseConnections] = useState<DatabaseConnection[]>([
-    {
-      id: '1',
-      name: '用户管理系统',
-      type: 'mysql',
-      host: 'localhost',
-      database: 'user_management'
-    },
-    {
-      id: '2',
-      name: '订单数据库',
-      type: 'postgresql',
-      host: 'localhost',
-      database: 'order_system'
-    },
-    { id: '3', name: '产品目录', type: 'mysql', host: 'localhost', database: 'product_catalog' }
-  ])
+  const [databaseConnections, setDatabaseConnections] = useState<DbConnection[]>([])
+  const [connectionStatus, setConnectionStatus] = useState<boolean>(false)
+  const [isConnecting, setIsConnecting] = useState<boolean>(false)
+  const [checkingStatus, setCheckingStatus] = useState<boolean>(false)
+
+  useEffect(() => {
+    getConnectionList().then((res) => {
+      setDatabaseConnections(res.data)
+    })
+  }, [])
+
+  // 检查连接状态
+  useEffect(() => {
+    if (selectedDatabase) {
+      setCheckingStatus(true)
+      getConnectionStatus(selectedDatabase.name)
+        .then((status) => {
+          setConnectionStatus(status)
+        })
+        .catch(() => {
+          setConnectionStatus(false)
+        })
+        .finally(() => {
+          setCheckingStatus(false)
+        })
+    } else {
+      setConnectionStatus(false)
+    }
+  }, [selectedDatabase])
+
+  // 连接数据库
+  const handleConnect = async (): Promise<void> => {
+    if (!selectedDatabase) return
+
+    setIsConnecting(true)
+    try {
+      const result = await createConnection(selectedDatabase)
+      if (result.success) {
+        setConnectionStatus(true)
+      } else {
+        console.error('连接失败:', result.message)
+      }
+    } catch (error) {
+      console.error('连接错误:', error)
+    } finally {
+      setIsConnecting(false)
+    }
+  }
 
   return (
     <Box
@@ -102,7 +133,7 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
               startAdornment={
                 selectedDatabase && (
                   <Chip
-                    label={selectedDatabase.type.toUpperCase()}
+                    label={selectedDatabase.dbType.toUpperCase()}
                     size="small"
                     color="primary"
                     variant="outlined"
@@ -151,7 +182,7 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
                       color="text.secondary"
                       sx={{ fontSize: '0.75rem' }}
                     >
-                      {db.host} / {db.database}
+                      {db.host} / {db.databaseName}
                     </Typography>
                   </Box>
                 </MenuItem>
@@ -160,13 +191,45 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
           </FormControl>
 
           {selectedDatabase && (
-            <Chip
-              label="已连接"
-              color="success"
-              variant="outlined"
-              size="small"
-              sx={{ height: 28, fontSize: '0.75rem' }}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {checkingStatus ? (
+                <Chip
+                  label="检查中..."
+                  color="default"
+                  variant="outlined"
+                  size="small"
+                  icon={<CircularProgress size={12} />}
+                  sx={{ height: 28, fontSize: '0.75rem' }}
+                />
+              ) : (
+                <Chip
+                  label={connectionStatus ? '已连接' : '未连接'}
+                  color={connectionStatus ? 'success' : 'error'}
+                  variant="outlined"
+                  size="small"
+                  sx={{ height: 28, fontSize: '0.75rem' }}
+                />
+              )}
+
+              {!connectionStatus && !checkingStatus && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={isConnecting ? <CircularProgress size={12} /> : <ConnectIcon />}
+                  onClick={handleConnect}
+                  disabled={isConnecting || messagesLength > 0}
+                  sx={{
+                    height: 28,
+                    fontSize: '0.75rem',
+                    px: 1.5,
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {isConnecting ? '连接中...' : '连接'}
+                </Button>
+              )}
+            </Box>
           )}
 
           <Button
@@ -195,12 +258,7 @@ const DatabaseSelector: React.FC<DatabaseSelectorProps> = ({
                 if (selectedDb) {
                   navigate('/database-model-detection', {
                     state: {
-                      connectionInfo: {
-                        name: selectedDb.name,
-                        type: selectedDb.type,
-                        host: selectedDb.host,
-                        database: selectedDb.database
-                      },
+                      connectionInfo: selectedDb,
                       fromChat: true
                     }
                   })

@@ -14,6 +14,7 @@ import { isSameRelation } from './_components/utils'
 import {
   generateDatabaseMetadata,
   getTablesWithColumns,
+  getForeignKeysByConnectionId,
   scanDatabase
 } from '../../services/database'
 import { DbLogicForeignKey, DbTableInfo } from '../../services/database'
@@ -49,8 +50,11 @@ const DatabaseModelDetection: React.FC = () => {
   useEffect(() => {
     if (isFromChat) {
       // 从聊天页面跳转过来，直接加载现有数据，跳过AI检测
-      getTablesWithColumns(23).then((res) => {
+      getTablesWithColumns(connectionInfo.id).then((res) => {
         setTables(res.data)
+      })
+      getForeignKeysByConnectionId(connectionInfo.id).then((res) => {
+        setRelations(res.data)
       })
       setDetectionComplete(true)
     } else {

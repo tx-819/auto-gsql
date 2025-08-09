@@ -12,21 +12,14 @@ import {
 } from './_components'
 import { useChatStore } from '../../stores'
 import { type AIProvider } from '../../utils/modelConfig'
+import { DbConnection } from '../../services/database'
 
 type ChatMode = 'chat' | 'agent'
-
-interface DatabaseConnection {
-  id: string
-  name: string
-  type: string
-  host: string
-  database: string
-}
 
 const ChatPage: React.FC = () => {
   const [inputValue, setInputValue] = useState('')
   const [chatMode, setChatMode] = useState<ChatMode>('chat')
-  const [selectedDatabase, setSelectedDatabase] = useState<DatabaseConnection | null>(null)
+  const [selectedDatabase, setSelectedDatabase] = useState<DbConnection | null>(null)
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>('deepseek')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { currentTopicId, loadMessages, messages, sendMessage, isLoading } = useChatStore()
@@ -106,7 +99,7 @@ const ChatPage: React.FC = () => {
         <DatabaseSelector
           selectedDatabase={selectedDatabase}
           messagesLength={messages.length}
-          onDatabaseChange={(database: DatabaseConnection) => {
+          onDatabaseChange={(database: DbConnection) => {
             // 如果已经有聊天内容，不允许变更数据库
             if (messages.length > 0) {
               return

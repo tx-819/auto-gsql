@@ -184,3 +184,18 @@ export const getTablesWithColumns = async (
   )
   return response as ApiResponse<DbTableInfo[]>
 }
+
+export const getForeignKeysByConnectionId = async (
+  connectionId: number
+): Promise<ApiResponse<DbLogicForeignKey[]>> => {
+  const params = new URLSearchParams({
+    connectionId: connectionId.toString()
+  })
+  const response = await request<DbLogicForeignKey[]>(
+    `/database/foreign-keys-by-connection-id?${params.toString()}`,
+    {
+      method: 'GET'
+    }
+  )
+  return response as ApiResponse<DbLogicForeignKey[]>
+}
